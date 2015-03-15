@@ -22,13 +22,13 @@ int main()
 
    clGetKernelInfo(krn, CL_KERNEL_FUNCTION_NAME, sizeof(strInfo), strInfo, NULL);
    cout << "Got kernel called: " << strInfo << "\n";
-   //fprintf(pFile, "The kernel is called: %s\n", strInfo);
 
-    for (n=3; n<=4; n++)
+    for (n=1; n<=4; n++)
     {
 
        clndrange_t ndr = clndrange_init1d(0, 16, 16);
 
+/// unipass
         for (i=0; i<1024; i++)
             debug[i] = -1;
        clmsync(stdacc, 0, debug, CL_MEM_DEVICE|CL_EVENT_WAIT);
@@ -36,10 +36,10 @@ int main()
        tstart = clock();
        clforka(stdacc, 0, krn, &ndr, CL_EVENT_WAIT, n, 1, debug);
        tend = clock();
-//       fout << "unipass," << n << "," << tstart << "," << tend << "," << (tend - tstart) << endl;
+
        fout << "unipass," << n << ","  << (tend - tstart) << endl;
        clmsync(stdacc, 0, debug, CL_MEM_HOST|CL_EVENT_WAIT);
-        i = 0;
+  /*      i = 0;
         while (i<1024)
         {
             if (debug[i] != -1)
@@ -53,11 +53,11 @@ int main()
             else
                 break;
         }
-        fout << endl;
+        fout << endl; */
         fout.flush();
 
-break;
 
+/// multicast
         for (i=0; i<1024; i++)
             debug[i] = -1;
        clmsync(stdacc, 0, debug, CL_MEM_DEVICE|CL_EVENT_WAIT);
@@ -65,10 +65,10 @@ break;
        tstart = clock();
        clforka(stdacc, 0, krn, &ndr, CL_EVENT_WAIT, n, 2, debug);
        tend = clock();
-//       fout << "multipass," << n << "," << tstart << "," << tend << "," << (tend - tstart) << endl;
+
        fout << "multipass," << n << "," << (tend - tstart) << endl;
        clmsync(stdacc, 0, debug, CL_MEM_HOST|CL_EVENT_WAIT);
-        i = 0;
+ /*       i = 0;
         while (i<1024)
         {
             if (debug[i] != -1)
@@ -82,10 +82,10 @@ break;
             else
                 break;
         }
-        fout << endl;
+        fout << endl;   */
         fout.flush();
 
-
+/// broardcast
         for (i=0; i<1024; i++)
             debug[i] = -1;
        clmsync(stdacc, 0, debug, CL_MEM_DEVICE|CL_EVENT_WAIT);
@@ -93,10 +93,10 @@ break;
        tstart = clock();
        clforka(stdacc, 0, krn, &ndr, CL_EVENT_WAIT, n, 0, debug);
        tend = clock();
-//       fout << "broadcast," << n << "," << tstart << "," << tend << "," << (tend - tstart) << endl;
+
        fout << "broadcast," << n << "," << (tend - tstart) << endl;
        clmsync(stdacc, 0, debug, CL_MEM_HOST|CL_EVENT_WAIT);
-        i = 0;
+   /*     i = 0;
         while (i<1024)
         {
             if (debug[i] != -1)
@@ -111,19 +111,9 @@ break;
                 break;
         }
         fout << endl;
-        fout.flush();
+   */     fout.flush();
     }
 
-/*    i = 0;
-    while (i<256)
-    {
-        cout << debug[i++];
-        if ((i%16) == 0)
-            cout << endl;
-        else
-            cout << ",\t";
-    }*/
-//        cout << std::dec <<  i << "," << std::hex << cid[i] << endl;
     fbuf.close();
     return 0;
 }
