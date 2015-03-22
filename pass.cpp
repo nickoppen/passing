@@ -29,8 +29,8 @@ int main()
        clndrange_t ndr = clndrange_init1d(0, 16, 16);
 
 /// unicast
-        for (i=0; i<1024; i++)
-            debug[i] = -1;
+//        for (i=0; i<1024; i++)
+//            debug[i] = -1;
        clmsync(stdacc, 0, debug, CL_MEM_DEVICE|CL_EVENT_WAIT);
 
        tstart = clock();
@@ -60,15 +60,15 @@ int main()
 
 
 /// multicast
-        for (i=0; i<1024; i++)
-            debug[i] = -1;
+//        for (i=0; i<1024; i++)
+//            debug[i] = -1;
        clmsync(stdacc, 0, debug, CL_MEM_DEVICE|CL_EVENT_WAIT);
 
        tstart = clock();
        clforka(stdacc, 0, krn, &ndr, CL_EVENT_WAIT, n, 2, debug);
        tend = clock();
 
-       fout << "multipass," << n << "," << (tend - tstart) << endl;
+       fout << "multicast," << n << "," << (tend - tstart) << endl;
        clmsync(stdacc, 0, debug, CL_MEM_HOST|CL_EVENT_WAIT);
 
     /// Uncomment to use debug as output

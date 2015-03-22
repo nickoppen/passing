@@ -15,8 +15,8 @@ __kernel void k_pass(__global int n, __global int method, __global int * debug)
     int vLocal[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 
-    firstI = gid * n;
-    lastI = firstI + n;
+    firstI = gid * n;                       /// the data to be passed is based on the core's global_id. This favours broadcast which is just iterates through the global ids writing to all. Unicast and Multicast are more complex because they
+    lastI = firstI + n;                     /// write to the cores neighbour(s) which may not have a gid + or - 1. Therefore the gidOrder array must be looked up to see where the data came from.
     for (i=firstI; i<lastI; i++)
         vLocal[i] = gid + 100;            /// ADD 100 to distinguish the initialised value from the default value which is 0
 
@@ -27,6 +27,10 @@ __kernel void k_pass(__global int n, __global int method, __global int * debug)
         if (method != 0)
         {
             initRing(&NEXT, &PREV, &ringIndex, gidOrder);       /// gidOrder[ringIndex] == gid;
+
+            ///
+            /// Unicast
+            ///
             if (method == 1)
             {
                 magnitude = ringIndex;      /// magnitude is the distance away from the starting point which is ringIndex
@@ -49,6 +53,9 @@ __kernel void k_pass(__global int n, __global int method, __global int * debug)
             }
             else
             {
+                ///
+                /// Multicast
+                ///
                 magnitude = 0;
                 magMax = CORECOUNT / 2; /// sending two sets of numbers at the same time
                 while (magnitude < magMax)
@@ -80,20 +87,29 @@ __kernel void k_pass(__global int n, __global int method, __global int * debug)
         }
         else
         {
-            /// transmit the node values calculated here to all other cores.
+//                    if (gid == 6)
+//                        for (j=0; j< (CORECOUNT*n); j++)
+//                            debug[d++] = vLocal[j];
+//
+//                    barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+
+            ///
+            /// Broadcast: transmit the node values calculated here to all other cores.
+            ///
             gid_next = (gid == (CORECOUNT - 1)) ? 0 : gid +1;
+
             while (gid_next != gid)
             {
                 remoteMemBase = LOCAL_MEM_ADDRESS_BASE(gid_next);
                 for (i=firstI; i < lastI; i++)
                     *(int *)NEIGHBOUR_LOC(remoteMemBase, vLocal,  i, (sizeof(int))) = vLocal[i];
                 gid_next = (gid_next == CORECOUNT - 1) ? 0 : gid_next + 1;
-                barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+   ///             barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
 
     /// Uncomment to use debug as output
-    //                if (gid == 0)
-    //                    for (j=0; j< (CORECOUNT*n); j++)
-    //                        debug[d++] = vLocal[j];
+//                    if (gid == 6)
+//                        for (j=0; j< (CORECOUNT*n); j++)
+//                            debug[d++] = vLocal[j];
             }
         }
     }
