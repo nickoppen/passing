@@ -18,15 +18,26 @@ int main()
 
    void * openHandle = clopen(stdacc, 0, CLLD_NOW);
 
-   cl_kernel krn = clsym(stdacc, openHandle, "k_pass", CLLD_NOW);
-
-   clGetKernelInfo(krn, CL_KERNEL_FUNCTION_NAME, sizeof(strInfo), strInfo, NULL);
+   cl_kernel krnUni = clsym(stdacc, openHandle, "k_passUni", CLLD_NOW);
+   clGetKernelInfo(krnUni, CL_KERNEL_FUNCTION_NAME, sizeof(strInfo), strInfo, NULL);
    cout << "Got kernel called: " << strInfo << "\n";
+
+   cl_kernel krnMulti = clsym(stdacc, openHandle, "k_passMulti", CLLD_NOW);
+   clGetKernelInfo(krnMulti, CL_KERNEL_FUNCTION_NAME, sizeof(strInfo), strInfo, NULL);
+   cout << "Got kernel called: " << strInfo << "\n";
+
+   cl_kernel krnBroadcast = clsym(stdacc, openHandle, "k_passBroadcastWait", CLLD_NOW);
+   clGetKernelInfo(krnBroadcast, CL_KERNEL_FUNCTION_NAME, sizeof(strInfo), strInfo, NULL);
+   cout << "Got kernel called: " << strInfo << "\n";
+
+   cl_kernel krnNoWait = clsym(stdacc, openHandle, "k_passBroadcastNoWait", CLLD_NOW);
+   clGetKernelInfo(krnNoWait, CL_KERNEL_FUNCTION_NAME, sizeof(strInfo), strInfo, NULL);
+   cout << "Got kernel called: " << strInfo << "\n";
+
+   clndrange_t ndr = clndrange_init1d(0, 16, 16);
 
     for (n=1; n<=16; n++)
     {
-
-       clndrange_t ndr = clndrange_init1d(0, 16, 16);
 
 /// unicast
 //        for (i=0; i<1024; i++)
@@ -34,10 +45,10 @@ int main()
        clmsync(stdacc, 0, debug, CL_MEM_DEVICE|CL_EVENT_WAIT);
 
        tstart = clock();
-       clforka(stdacc, 0, krn, &ndr, CL_EVENT_WAIT, n, 1, debug);
+       clforka(stdacc, 0, krnUni, &ndr, CL_EVENT_WAIT, n, debug);
        tend = clock();
 
-       fout << "unicast," << n << ","  << (tend - tstart) << endl;
+       fout << n << "," << "unicast," << (tend - tstart) << endl;
        clmsync(stdacc, 0, debug, CL_MEM_HOST|CL_EVENT_WAIT);
 
       /// Uncomment to use debug as output
@@ -65,10 +76,10 @@ int main()
        clmsync(stdacc, 0, debug, CL_MEM_DEVICE|CL_EVENT_WAIT);
 
        tstart = clock();
-       clforka(stdacc, 0, krn, &ndr, CL_EVENT_WAIT, n, 2, debug);
+       clforka(stdacc, 0, krnMulti, &ndr, CL_EVENT_WAIT, n, debug);
        tend = clock();
 
-       fout << "multicast," << n << "," << (tend - tstart) << endl;
+       fout << n << "," << "multicast," << (tend - tstart) << endl;
        clmsync(stdacc, 0, debug, CL_MEM_HOST|CL_EVENT_WAIT);
 
     /// Uncomment to use debug as output
@@ -95,10 +106,41 @@ int main()
        clmsync(stdacc, 0, debug, CL_MEM_DEVICE|CL_EVENT_WAIT);
 
        tstart = clock();
-       clforka(stdacc, 0, krn, &ndr, CL_EVENT_WAIT, n, 0, debug);
+       clforka(stdacc, 0, krnBroadcast, &ndr, CL_EVENT_WAIT, n, debug);
        tend = clock();
 
-       fout << "broadcast," << n << "," << (tend - tstart) << endl;
+       fout << n << "," << "broadcast," << (tend - tstart) << endl;
+       clmsync(stdacc, 0, debug, CL_MEM_HOST|CL_EVENT_WAIT);
+
+    /// Uncomment to use debug as output
+   /*     i = 0;
+        while (i<1024)
+        {
+            if (debug[i] != -1)
+            {
+                fout << debug[i++];
+                if ((i%(16*n)) == 0)
+                    fout << endl;
+                else
+                    fout << ",";
+            }
+            else
+                break;
+        }
+        fout << endl;
+   */     fout.flush();
+
+
+/// broardcast - No Wait
+        for (i=0; i<1024; i++)
+            debug[i] = -1;
+       clmsync(stdacc, 0, debug, CL_MEM_DEVICE|CL_EVENT_WAIT);
+
+       tstart = clock();
+       clforka(stdacc, 0, krnNoWait, &ndr, CL_EVENT_WAIT, n, debug);
+       tend = clock();
+
+       fout << n << "," << "broadcastNoWait," << (tend - tstart) << endl;
        clmsync(stdacc, 0, debug, CL_MEM_HOST|CL_EVENT_WAIT);
 
     /// Uncomment to use debug as output
