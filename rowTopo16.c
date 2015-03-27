@@ -1,10 +1,28 @@
 #include "coreId16.inc"
 
-void initRing(unsigned int * RIGHT,unsigned int * LEFT, unsigned int * ringOrder)
+void initRing(unsigned int * RIGHT,unsigned int * LEFT, unsigned int * ringOrder, unsigned int * gidOrder)
 {
 
     unsigned int gid = get_global_id(0);
     unsigned int coreId = LOCAL_MEM_ADDRESS_BASE(gid);
+    gidOrder[0] = 0;
+    gidOrder[1] = 1;
+    gidOrder[2] = 2;
+    gidOrder[3] = 3;
+    gidOrder[4] = 7;
+    gidOrder[5] = 6;
+    gidOrder[6] = 5;
+    gidOrder[7] = 4;
+    gidOrder[8] = 8;
+    gidOrder[9] = 9;
+    gidOrder[10] = 10;
+    gidOrder[11] = 11;
+    gidOrder[12] = 15;
+    gidOrder[13] = 14;
+    gidOrder[14] = 13;
+    gidOrder[15] = 12;
+
+
 
     switch(coreId)
     {
