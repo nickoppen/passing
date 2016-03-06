@@ -1,4 +1,5 @@
-#include "ringTopo16.c"
+#include "//home//parallella//Work//passing//ringTopo16.c"
+
 #define REPEATCOUNT 100000
 
 void initLocal(int * vLocal, int n, unsigned int base)
@@ -110,7 +111,6 @@ __kernel void k_passMulti(__global int g_n, __global int * g_debug)
         }
     }
 }
-
         ///
         /// Broadcast: transmit the node values calculated here to all other cores.
         ///
@@ -159,7 +159,6 @@ __kernel void k_passBroadcastWait(__global int g_n, __global int * g_debug)
         }
     }
 }
-
         ///
         /// Broadcast: transmit the node values calculated here to all other cores without waiting between sends.
         ///
@@ -206,4 +205,5 @@ __kernel void k_passBroadcastNoWait(__global int g_n, __global int * g_debug)
 //                    if (gid == 6)
 //                        for (j=0; j< (CORECOUNT*n); j++)
 //                            g_debug[d++] = vLocal[j];
+
 }
