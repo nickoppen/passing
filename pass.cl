@@ -1,6 +1,8 @@
 #include "//home//parallella//Work//passing//ringTopo16.c"
+#include <coprthr_mpi.h>
 
 #define REPEATCOUNT 100000
+#define MPI_BUF_SIZE 1024
 
 void initLocal(int * vLocal, int n, unsigned int base)
 {
@@ -57,6 +59,22 @@ __kernel void k_passUni(__global int g_n, __global int * g_debug)
     }
 }
 
+__kernel void k_mpiPassUni(__global int g_n, __global int * g_debug)
+{
+	int rank, size;
+	int left, right;
+
+	MPI_Status status;
+	MPI_Init(0, MPI_BUF_SIZE);
+	MPI_Comm comm = MPI_COMM_THREAD;
+	MPI_Comm_rank(comm, &rank);
+	MPI_Comm_size(comm, &size);
+	MPI_Cart_shift(comm, 0, 1, &left, &right);
+
+
+	MPI_Finalize();
+}
+
 
         ///
         /// Multicast
@@ -111,12 +129,31 @@ __kernel void k_passMulti(__global int g_n, __global int * g_debug)
         }
     }
 }
+
+__kernel void k_mpiPassMulti(__global int g_n, __global int * g_debug)
+{
+	int rank, size;
+	int left, right;
+
+	MPI_Status status;
+	MPI_Init(0,MPI_BUF_SIZE);
+	MPI_Comm comm = MPI_COMM_THREAD;
+	MPI_Comm_rank(comm, &rank);
+	MPI_Comm_size(comm, &size);
+	MPI_Cart_shift(comm, 0, 1, &left, &right);
+
+
+	MPI_Finalize();
+}
+
+
+
         ///
         /// Broadcast: transmit the node values calculated here to all other cores.
         ///
 
 
-__kernel void k_passBroadcastWait(__global int g_n, __global int * g_debug)
+/*__kernel void k_passBroadcastWait(__global int g_n, __global int * g_debug)
 {
     unsigned int gid_next, gid = get_global_id(0);
     unsigned int remoteMemBase;
@@ -159,6 +196,7 @@ __kernel void k_passBroadcastWait(__global int g_n, __global int * g_debug)
         }
     }
 }
+*/
         ///
         /// Broadcast: transmit the node values calculated here to all other cores without waiting between sends.
         ///
@@ -206,4 +244,19 @@ __kernel void k_passBroadcastNoWait(__global int g_n, __global int * g_debug)
 //                        for (j=0; j< (CORECOUNT*n); j++)
 //                            g_debug[d++] = vLocal[j];
 
+}
+
+__kernel void k_mpiBroadcast(__global int g_n, __global int * g_debug)
+{
+	int rank, size;
+	int left, right;
+
+	MPI_Status status;
+	MPI_Init(0,MPI_BUF_SIZE);
+	MPI_Comm comm = MPI_COMM_THREAD;
+	MPI_Comm_rank(comm, &rank);
+	MPI_Comm_size(comm, &size);
+	MPI_Cart_shift(comm, 0, 1, &left, &right);
+
+	MPI_Finalize();
 }
