@@ -61,6 +61,8 @@ __kernel void k_passUni(__global int g_n, __global int * g_debug)
 
 __kernel void k_mpiPassUni(__global int g_n, __global int * g_debug)
 {
+    unsigned int gid = get_global_id(0);
+    unsigned int d = 0;
 	int rank, size;
 	int left, right;
 
@@ -70,6 +72,14 @@ __kernel void k_mpiPassUni(__global int g_n, __global int * g_debug)
 	MPI_Comm_rank(comm, &rank);
 	MPI_Comm_size(comm, &size);
 	MPI_Cart_shift(comm, 0, 1, &left, &right);
+
+	d = gid * 5;
+
+	g_debug[d++] = (float)gid;
+	g_debug[d++] = (float)rank;
+	g_debug[d++] = (float)size;
+	g_debug[d++] = (float)left;
+	g_debug[d++] = (float)right;
 
 
 	MPI_Finalize();
