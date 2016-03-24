@@ -1,4 +1,5 @@
 #include "//home//parallella//Work//passing//ringTopo16.c"
+#include "timer.c"
 #include <coprthr_mpi.h>
 
 #define REPEATCOUNT 100000
@@ -260,6 +261,8 @@ __kernel void k_mpiBroadcast(__global int g_n, __global int * g_debug)
 {
 	int rank, size;
 	int left, right;
+    unsigned int  repeater = REPEATCOUNT;  /// add to the work load a litte
+	unsigned int execTime;
 
 	MPI_Status status;
 	MPI_Init(0,MPI_BUF_SIZE);
@@ -267,6 +270,16 @@ __kernel void k_mpiBroadcast(__global int g_n, __global int * g_debug)
 	MPI_Comm_rank(comm, &rank);
 	MPI_Comm_size(comm, &size);
 	MPI_Cart_shift(comm, 0, 1, &left, &right);
+
+	init_timer();
+	init_clock();
+
+    while (repeater--)
+    {
+    }
+
+	execTime = get_clock();     /// get the number of clock ticks
+
 
 	MPI_Finalize();
 }

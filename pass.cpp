@@ -16,6 +16,7 @@ int main()
     char strInfo[128];
 
    cl_int * debug = (cl_int*)clmalloc(stdacc, 1024 * sizeof(cl_int), 0);
+   cout << "malloced debug\n";
 
    void * openHandle = clopen(stdacc, 0, CLLD_NOW);     /// linked verions
 //   void * openHandle = clopen(stdacc, "//home//parallella//Work//passing//pass.cl", CLLD_NOW);            /// JIT version
