@@ -1,4 +1,5 @@
 #include "//home//parallella//Work//passing//ringTopo16.c"
+#include "//home//parallella//Work//passing//passing.h"
 #include "timer.c"
 #include <coprthr_mpi.h>
 
@@ -60,8 +61,9 @@ __kernel void k_passUni(__global int g_n, __global int * g_debug)
     }
 }
 
-__kernel void k_mpiPassUni(__global int g_n, __global int * g_debug)
+__kernel void k_mpiPassUni(void * g_args)
 {
+    pass_args * args = (pass_args *)g_args;
     unsigned int gid = get_global_id(0);
     unsigned int d = 0;
 	int rank, size;
