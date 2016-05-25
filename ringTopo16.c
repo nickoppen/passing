@@ -1,10 +1,10 @@
-#include "coreId16.inc"
+#include "coreId16.h"
 
 void initRing(unsigned int * NEXT,unsigned int * PREV, unsigned int * ringIndex, unsigned int * gidOrder)
 {
 
-    unsigned int gid = get_global_id(0);
-    unsigned int coreId = LOCAL_MEM_ADDRESS_BASE(gid);
+    unsigned int gid = coprthr_corenum();
+    unsigned int coreId = LOCAL_MEM_ADDRESS_BASE();
     gidOrder[0] = 0;
     gidOrder[1] = 1;
     gidOrder[2] = 2;
