@@ -25,7 +25,8 @@ int main()
 //    fbuf.open("pass.csv", std::ios::out);
 //    std::ostream fout(&fbuf);
 //    char strInfo[128];
-    int host_debug[1024];
+//    int host_debug[DEBUG_BUFFER];
+    int * host_debug = (int*)malloc(DEBUG_BUFFER*sizeof(int));
     pass_args args;
 
 	int dd = coprthr_dopen(COPRTHR_DEVICE_E32,COPRTHR_O_THREAD);
@@ -39,12 +40,12 @@ int main()
     }
 
 	coprthr_program_t prg = coprthr_cc_read_bin("./passing.e32", 0);
-	coprthr_sym_t thr_passUni = (coprthr_sym_t)coprthr_getsym(prg,"k_passUni");
+//	coprthr_sym_t thr_passUni = (coprthr_sym_t)coprthr_getsym(prg,"k_passUni");
 	coprthr_sym_t thr_mpiPassUni = (coprthr_sym_t)coprthr_getsym(prg,"k_mpiPassUni");
 //	std::cout << "prg=" << prg << " thr mpiPassUni=" << thr_mpiPassUni  << "\n";
 //   coprthr_sym_t krnUni = clsym(stdacc, openHandle, "k_passUni", CLLD_NOW);
 //   coprthr_sym_t krnMPIUni = clsym(stdacc, openHandle, "k_mpiPassUni", CLLD_NOW);
-   coprthr_sym_t krnMulti = (coprthr_sym_t)coprthr_getsym(prg, "k_passMulti");
+//   coprthr_sym_t krnMulti = (coprthr_sym_t)coprthr_getsym(prg, "k_passMulti");
 //   coprthr_sym_t krnBroadcast = clsym(stdacc, openHandle, "k_passBroadcastWait", CLLD_NOW);
 //   coprthr_sym_t krnNoWait = clsym(stdacc, openHandle, "k_passBroadcastNoWait", CLLD_NOW);
 
@@ -53,11 +54,11 @@ int main()
     for (n=1; n<=1; n++)
     {
         //std::cout << "n is equal to: " << n << "\n";
-        args.n = n;     /// passed to all kernals
+        args.n = n;     /// passed to all kernels
 
-/// unicast
+ /// unicast
 /// Uncomment if using debug
-//        for (i=0; i<1024; i++)
+//        for (i=0; i<DEBUG_BUFFER; i++)
 //            debug[i] = -1;
 /*       clmsync(stdacc, 0, debug, CL_MEM_DEVICE|CL_EVENT_WAIT);
 
@@ -72,7 +73,7 @@ int main()
 
       /// Uncomment to use debug as output
       i = 0;
-        while (i<1024)
+        while (i<DEBUG_BUFFER)
         {
             if (debug[i] != -1)
             {
@@ -90,34 +91,34 @@ int main()
 
 /// MPI unicast
 /// Uncomment if using debug
-       for (i = 0; i < 1024; i++) host_debug[i] = -1;                                       /// initialise the host debug space
+       for (i = 0; i < DEBUG_BUFFER; i++) host_debug[i] = -1;                                       /// initialise the host debug space
 
 //       std::cout << "about to malloc dev memory - MPI Unicast\n";
         printf("About to allocate device shared memory.\n");
-       coprthr_mem_t dev_debug = (coprthr_mem_t)coprthr_dmalloc(dd, 1024*sizeof(int), 0);             /// Allocate some space on the epiphany for debug
+       coprthr_mem_t dev_debug = (coprthr_mem_t)coprthr_dmalloc(dd, DEBUG_BUFFER*sizeof(int), 0);             /// Allocate some space on the epiphany for debug
 
 //       std::cout << "about to write dev memory - MPI Unicast\n";
-       printf("About to write to device shared memory.\n");
-       coprthr_dwrite(dd, dev_debug, 0, host_debug, 1024*sizeof(int),COPRTHR_E_WAIT);    /// Initialise the debug memory
+       printf("Write from %p to %p.\n", host_debug, dev_debug);
+       coprthr_dwrite(dd, dev_debug, 0, (void*)host_debug, DEBUG_BUFFER*sizeof(int),COPRTHR_E_WAIT);    /// Initialise the debug memory
+       printf("In shared mem [1] is %i\n", (*(dev_debug+1)));
 //       std::cout << "written dev memory - MPI Unicast\n";
         args.debug = (int*)dev_debug;
 
        tstart = clock();
 	   coprthr_mpiexec(dd, ECORES, thr_mpiPassUni, &args, sizeof(args), 0);
        tend = clock();
-	   coprthr_mpiexec(dd, ECORES, krnMulti, &args, sizeof(args), 0);
 
 //       std::cout << "forked - MPI Unicast\n";
        printf("forked - MPI Unicast. Exec time was: %i\n", (int)(tend - tstart));
 
 //       fout << n << "," << "mpi unicast," << (tend - tstart) << "\n";
 
-       coprthr_dread(dd, dev_debug, 0, host_debug, 1024*sizeof(int),COPRTHR_E_WAIT);
+       coprthr_dread(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int),COPRTHR_E_WAIT);
         printf("Read return data from shared memory\n");
 
       /// Uncomment to use debug as output
       i = 0;
-        while (i<1024)
+        while (i<DEBUG_BUFFER)
         {
 //            if (host_debug[i] != -1)
             if (i < (16*5))
@@ -142,7 +143,7 @@ int main()
 /// multicast
 
 /// Uncomment if using debug
-//        for (i=0; i<1024; i++)
+//        for (i=0; i<DEBUG_BUFFER; i++)
 //            debug[i] = -1;
 //       clmsync(stdacc, 0, debug, CL_MEM_DEVICE|CL_EVENT_WAIT);
 //
@@ -156,7 +157,7 @@ int main()
 
     /// Uncomment to use debug as output
  /*       i = 0;
-        while (i<1024)
+        while (i<DEBUG_BUFFER)
         {
             if (debug[i] != -1)
             {
@@ -175,7 +176,7 @@ int main()
 /// broardcast
 
 /// Uncomment if using debug
-//        for (i=0; i<1024; i++)
+//        for (i=0; i<DEBUG_BUFFER; i++)
 //            debug[i] = -1;
 //       clmsync(stdacc, 0, debug, CL_MEM_DEVICE|CL_EVENT_WAIT);
 //
@@ -189,7 +190,7 @@ int main()
 
     /// Uncomment to use debug as output
    /*     i = 0;
-        while (i<1024)
+        while (i<DEBUG_BUFFER)
         {
             if (debug[i] != -1)
             {
@@ -210,7 +211,7 @@ int main()
 /// broardcast - No Wait
 
 /// Uncomment if using debug
-//        for (i=0; i<1024; i++)
+//        for (i=0; i<DEBUG_BUFFER; i++)
 //            debug[i] = -1;
 //       clmsync(stdacc, 0, debug, CL_MEM_DEVICE|CL_EVENT_WAIT);
 //
@@ -226,7 +227,7 @@ int main()
     /// Uncomment to use debug as output
     /// First Retrieve the debug output from the cores - TODO
    /*     i = 0;
-        while (i<1024)
+        while (i<DEBUG_BUFFER)
         {
             if (debug[i] != -1)
             {

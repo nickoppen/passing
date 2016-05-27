@@ -23,6 +23,38 @@ void initLocal(int * vLocal, int n, unsigned int base)
 
 }
 
+//__kernel void k_mpiPassUni(void * g_args)
+void __entry k_mpiPassUni(void * g_args)
+{
+    pass_args * args = (pass_args *)g_args;
+    int buf[DEBUG_BUFFER];
+    unsigned int gid = coprthr_get_thread_id();
+    unsigned int d = 0;
+    int rank, size;
+    int left, right;
+
+//    e_dma_copy(buf, args->debug, DEBUG_BUFFER*sizeof(int));
+    MPI_Status status;
+    MPI_Init(0, MPI_BUF_SIZE);
+    MPI_Comm comm = MPI_COMM_THREAD;
+    MPI_Comm_rank(comm, &rank);
+    MPI_Comm_size(comm, &size);
+    MPI_Cart_shift(comm, 0, 1, &left, &right);
+
+    d = rank * 5;
+
+    host_printf("k_mpiPassUni: thread %i has d at %i, *debug is %p\n", gid, d, args->debug);//args->debug[d]);
+
+    args->debug[d++] = gid;
+    args->debug[d++] = rank;
+    args->debug[d++] = size;
+    args->debug[d++] = left;
+    args->debug[d++] = right;
+
+    MPI_Finalize();
+}
+
+
 ///
 /// Unicast
 ///
@@ -70,36 +102,6 @@ void __entry k_passUni(pass_args * pArgs)
         while (magnitude != ringIndex);
     }
 }
-
-//__kernel void k_mpiPassUni(void * g_args)
-void __entry k_mpiPassUni(void * g_args)
-{
-    pass_args * args = (pass_args *)g_args;
-    unsigned int gid = coprthr_get_thread_id();
-    unsigned int d = 0;
-    int rank, size;
-    int left, right;
-
-    MPI_Status status;
-    MPI_Init(0, MPI_BUF_SIZE);
-    MPI_Comm comm = MPI_COMM_THREAD;
-    MPI_Comm_rank(comm, &rank);
-    MPI_Comm_size(comm, &size);
-    MPI_Cart_shift(comm, 0, 1, &left, &right);
-
-    d = rank * 5;
-
-    args->debug[d++] = (float)gid;
-    args->debug[d++] = (float)rank;
-    args->debug[d++] = (float)size;
-    args->debug[d++] = (float)left;
-    args->debug[d++] = (float)right;
-
-    host_printf("k_mpiPassUni: thread %i has d at %i\n", gid, d);
-
-    MPI_Finalize();
-}
-
 
 ///
 /// Multicast
