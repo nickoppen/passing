@@ -40,7 +40,7 @@ int main()
     }
 
 	coprthr_program_t prg = coprthr_cc_read_bin("./passing.e32", 0);
-//	coprthr_sym_t thr_passUni = (coprthr_sym_t)coprthr_getsym(prg,"k_passUni");
+//	coprthr_kernel_t thr_passUni = (coprthr_sym_t)coprthr_getsym(prg,"k_passUni");
 	coprthr_sym_t thr_mpiPassUni = (coprthr_sym_t)coprthr_getsym(prg,"k_mpiPassUni");
 //	std::cout << "prg=" << prg << " thr mpiPassUni=" << thr_mpiPassUni  << "\n";
 //   coprthr_sym_t krnUni = clsym(stdacc, openHandle, "k_passUni", CLLD_NOW);
@@ -49,6 +49,11 @@ int main()
 //   coprthr_sym_t krnBroadcast = clsym(stdacc, openHandle, "k_passBroadcastWait", CLLD_NOW);
 //   coprthr_sym_t krnNoWait = clsym(stdacc, openHandle, "k_passBroadcastNoWait", CLLD_NOW);
 
+       coprthr_mem_t dev_debug = (coprthr_mem_t)coprthr_dmalloc(dd, DEBUG_BUFFER*sizeof(int), 0);             /// Allocate some space on the epiphany for debug
+        for (i=0; i<DEBUG_BUFFER; i++)
+            host_debug[i] = -1;
+        coprthr_dwrite(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int), COPRTHR_E_WAIT);
+        args.debug = (int*)dev_debug;
 
 //    for (n=1; n<=16; n++)
     for (n=1; n<=1; n++)
@@ -57,52 +62,42 @@ int main()
         args.n = n;     /// passed to all kernels
 
  /// unicast
-/// Uncomment if using debug
-//        for (i=0; i<DEBUG_BUFFER; i++)
-//            debug[i] = -1;
-/*       clmsync(stdacc, 0, debug, CL_MEM_DEVICE|CL_EVENT_WAIT);
-
+/*
+        printf("about to call Unipass.\n");
        tstart = clock();
-
-       clforka(stdacc, 0, krnUni, &ndr, CL_EVENT_WAIT, n, debug);
-       cout << "forked - Unicast\n";
+//       coprthr_dexec(dd, ECORES, thr_passUni, &args, COPRTHR_E_WAIT);   // wait for the documentaiton for this call
+        coprthr_mpiexec(dd, ECORES, thr_passUni, &args, sizeof(pass_args), 0);
        tend = clock();
+       printf("forked - MPI Unicast. Exec time was: %i\n", (int)(tend - tstart));
 
-       fout << n << "," << "unicast," << (tend - tstart) << endl;
-       clmsync(stdacc, 0, debug, CL_MEM_HOST|CL_EVENT_WAIT);
+//       fout << n << "," << "unicast," << (tend - tstart) << endl;
+        coprthr_dread(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int), COPRTHR_E_NOWAIT);
 
       /// Uncomment to use debug as output
       i = 0;
         while (i<DEBUG_BUFFER)
         {
-            if (debug[i] != -1)
+//            if (host_debug[i] != -1)
+            if (i < (16*5))
             {
-                fout << debug[i++];
+//                fout << host_debug[i++];
+                printf("%d, ", host_debug[i++]);
                 if ((i%(16*n)) == 0)
-                    fout << endl;
+//                    fout << std::endl;
+                    printf("\n");
                 else
-                    fout << ",";
+                    printf("'");
+//                    fout << ",";
             }
             else
                 break;
         }
-        fout << endl;  */
+        printf("\n");
+//        fout << endl;
 //        fout.flush();
-
+*/
 /// MPI unicast
 /// Uncomment if using debug
-       for (i = 0; i < DEBUG_BUFFER; i++) host_debug[i] = -1;                                       /// initialise the host debug space
-
-//       std::cout << "about to malloc dev memory - MPI Unicast\n";
-        printf("About to allocate device shared memory.\n");
-       coprthr_mem_t dev_debug = (coprthr_mem_t)coprthr_dmalloc(dd, DEBUG_BUFFER*sizeof(int), 0);             /// Allocate some space on the epiphany for debug
-
-//       std::cout << "about to write dev memory - MPI Unicast\n";
-       printf("Write from %p to %p.\n", host_debug, dev_debug);
-       coprthr_dwrite(dd, dev_debug, 0, (void*)host_debug, DEBUG_BUFFER*sizeof(int),COPRTHR_E_WAIT);    /// Initialise the debug memory
-       printf("In shared mem [1] is %i\n", (*(dev_debug+1)));
-//       std::cout << "written dev memory - MPI Unicast\n";
-        args.debug = (int*)dev_debug;
 
        tstart = clock();
 	   coprthr_mpiexec(dd, ECORES, thr_mpiPassUni, &args, sizeof(args), 0);

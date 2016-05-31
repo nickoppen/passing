@@ -12,6 +12,9 @@
 #define REPEATCOUNT 100000
 #define MPI_BUF_SIZE 1024
 
+/// global for debugging
+int _debugSpace[4];
+
 void initLocal(int * vLocal, int n, unsigned int base)
 {
     unsigned int firstI, lastI, i;
@@ -33,6 +36,11 @@ void __entry k_mpiPassUni(void * g_args)
     int rank, size;
     int left, right;
 
+    _debugSpace[0] = args->debug[0];
+    _debugSpace[1] = args->debug[1];
+    _debugSpace[2] = args->debug[2];
+    _debugSpace[3] = args->debug[3];
+
 //    e_dma_copy(buf, args->debug, DEBUG_BUFFER*sizeof(int));
     MPI_Status status;
     MPI_Init(0, MPI_BUF_SIZE);
@@ -44,12 +52,20 @@ void __entry k_mpiPassUni(void * g_args)
     d = rank * 5;
 
     host_printf("k_mpiPassUni: thread %i has d at %i, *debug is %p\n", gid, d, args->debug);//args->debug[d]);
+phalt();
 
-    args->debug[d++] = gid;
-    args->debug[d++] = rank;
-    args->debug[d++] = size;
+    args->debug[d++] = gid+1;
+    args->debug[d++] = rank+16;
+    args->debug[d++] = size+32;
     args->debug[d++] = left;
     args->debug[d++] = right;
+
+    _debugSpace[0] = args->debug[0];
+    _debugSpace[1] = args->debug[1];
+    _debugSpace[2] = args->debug[2];
+    _debugSpace[3] = args->debug[3];
+
+phalt();
 
     MPI_Finalize();
 }
@@ -63,24 +79,28 @@ void __entry k_mpiPassUni(void * g_args)
 void __entry k_passUni(pass_args * pArgs)
 {
     unsigned int gid = coprthr_get_thread_id();
-    unsigned int NEXT, PREV, ringIndex, gidOrder[CORECOUNT];
+//    unsigned int NEXT, PREV, ringIndex, gidOrder[CORECOUNT];
     unsigned int i, j;
     unsigned int d = 0;
-    unsigned int firstI, lastI;
-    unsigned int magnitude;
-    unsigned int  repeater = REPEATCOUNT;  /// add to the work load a litte
+//    unsigned int firstI, lastI;
+//    unsigned int magnitude;
+//    unsigned int  repeater = REPEATCOUNT;  /// add to the work load a litte
 
-    int n = pArgs->n; /// local copy of g_n
+//    pass_args * args = (pass_args*)pArgs; /// local copy of g_n
 
-    int vLocal[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+//    int vLocal[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    initRing(&NEXT, &PREV, &ringIndex, gidOrder);       /// gidOrder[ringIndex] == gid;
-    initLocal(vLocal, n, ringIndex);                    /// the global_id has been replaced by the ringIndex as the primary "logical" location
+//    initRing(&NEXT, &PREV, &ringIndex, gidOrder);       /// gidOrder[ringIndex] == gid;
+//    initLocal(vLocal, n, ringIndex);                    /// the global_id has been replaced by the ringIndex as the primary "logical" location
 
 //            coprthr_barrier(0);
-    host_printf("k_PassUni: thread %i has d at %i\n", gid, d);
+    d = gid * 5;
+    pArgs->debug[d] = gid;
+    host_printf("k_PassUni: thread %i has d at %i, debug at d is %i\n", gid, d, pArgs->debug[d]);
+//    host_printf("k_PassUni: thread %i has d at %i\n", gid, d);
+    pArgs->debug[d] = gid;
 
-    while (repeater--)
+/*    while (repeater--)
     {
         magnitude = ringIndex;      /// magnitude is the distance away from the starting point which is ringIndex
         do
@@ -101,7 +121,7 @@ void __entry k_passUni(pass_args * pArgs)
         }
         while (magnitude != ringIndex);
     }
-}
+*/}
 
 ///
 /// Multicast
