@@ -1,46 +1,44 @@
 #include <iostream>
 #include <fstream>
-#include "coprthr.h"
-#include "coprthr_cc.h"
-#include "coprthr_thread.h"
-#include "coprthr_mpi.h"
 #include <ctime>
 
-#include "//home//parallella//Work//passing//passing.h"
+extern "C" {
+#include <coprthr.h>
+#include <coprthr_cc.h>
+#include <coprthr_thread.h>
+#include <coprthr_mpi.h>
+}
 
-#define CORES 16    /// Not great - CORECOUNT is defined as the same thing in ringTopo16.c
+#include "passing.h"
 
-using namespace std;
+#define ECORES 16    /// Not great - CORECOUNT is defined as the same thing in ringTopo16.c
 
-struct
-{
-    int n;      /// the number of times each core should rerun the pass procedure
-} pass_args;
+//using namespace std;
 
 int main()
 {
     int i;    /// Uncomment when using debug
     int  n;
     clock_t tstart, tend;
-    filebuf fbuf;
+    std::filebuf fbuf;
     fbuf.open("pass.csv", std::ios::out);
-    ostream fout(&fbuf);
-    char strInfo[128];
+    std::ostream fout(&fbuf);
+//    char strInfo[128];
     int host_debug[1024];
     pass_args args;
 
 	int h_epip = coprthr_dopen(COPRTHR_DEVICE_E32,COPRTHR_O_THREAD);
-	cout << "h_epip=" << h_epip << "\n";
+	std::cout << "h_epip=" << h_epip << "\n";
 	if (h_epip<0)
 	{
-        cout << "device open failed\n";
+        std::cout << "device open failed\n";
         exit(0);
     }
 
 	coprthr_program_t prg;
-	prg = coprthr_cc_read_bin("./mpi_tfunc.cbin.3.e32", 0);
-	coprthr_sym_t thr_mpiPassUni = coprthr_getsym(prg,"k_mpiPassUni");
-	cout << "prg=" << prg << " thr mpiPassUni=" << thr_mpiPassUni  << "\n";
+	prg = coprthr_cc_read_bin("./passing.e32", 0);
+	coprthr_sym_t thr_mpiPassUni = (coprthr_sym_t)coprthr_getsym(prg,"k_mpiPassUni");
+	std::cout << "prg=" << prg << " thr mpiPassUni=" << thr_mpiPassUni  << "\n";
 //   cl_kernel krnUni = clsym(stdacc, openHandle, "k_passUni", CLLD_NOW);
 //   cl_kernel krnMPIUni = clsym(stdacc, openHandle, "k_mpiPassUni", CLLD_NOW);
 //   cl_kernel krnMulti = clsym(stdacc, openHandle, "k_passMulti", CLLD_NOW);
@@ -50,7 +48,7 @@ int main()
 
     for (n=1; n<=16; n++)
     {
-        cout << "n is equal to: " << n << "\n";
+        //std::cout << "n is equal to: " << n << "\n";
         args.n = n;     /// passed to all kernals
 
 /// unicast
@@ -89,19 +87,19 @@ int main()
 /// MPI unicast
 /// Uncomment if using debug
        for (i = 0; i < 1024; i++) host_debug[i] = -1;                                       /// initialise the host debug space
-       cout << "about to malloc dev memory - MPI Unicast\n";
-       coprthr_mem_t dev_debug = coprthr_dmalloc(h_epip, 1024*sizeof(int), 0);             /// Allocate some space on the epiphany for debug
-       cout << "about to write dev memory - MPI Unicast\n";
+       std::cout << "about to malloc dev memory - MPI Unicast\n";
+       coprthr_mem_t dev_debug = (coprthr_mem_t)coprthr_dmalloc(h_epip, 1024*sizeof(int), 0);             /// Allocate some space on the epiphany for debug
+       std::cout << "about to write dev memory - MPI Unicast\n";
        coprthr_dwrite(h_epip, dev_debug, 0, host_debug, 1024*sizeof(int),COPRTHR_E_WAIT);    /// Initialise the debug memory
-       cout << "written dev memory - MPI Unicast\n";
+       std::cout << "written dev memory - MPI Unicast\n";
 
        tstart = clock();
-	   coprthr_mpiexec(h_epip, CORES, thr_mpiPassUni, &args, sizeof(args), 0);
+	   coprthr_mpiexec(h_epip, ECORES, thr_mpiPassUni, &args, sizeof(args), 0);
        tend = clock();
 
-       cout << "forked - MPI Unicast\n";
+       std::cout << "forked - MPI Unicast\n";
 
-       fout << n << "," << "mpi unicast," << (tend - tstart) << endl;
+       fout << n << "," << "mpi unicast," << (tend - tstart) << "\n";
 
        coprthr_dread(h_epip, dev_debug, 0, host_debug, 1024*sizeof(int),COPRTHR_E_WAIT);
 
@@ -114,14 +112,14 @@ int main()
             {
                 fout << host_debug[i++];
                 if ((i%(16*n)) == 0)
-                    fout << endl;
+                    fout << std::endl;
                 else
                     fout << ",";
             }
             else
                 break;
         }
-        fout << endl;
+        fout << std::endl;
         fout.flush();
 
 
@@ -227,7 +225,7 @@ int main()
         }
         fout << endl;
    */
-         fout.flush();
+//         fout.flush();
     }
 
 	coprthr_dclose(h_epip);
