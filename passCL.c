@@ -24,7 +24,7 @@ void __entry k_mpiPassUni(void * g_args)
     unsigned int gid = coprthr_get_thread_id();
     int rank, size;
     int left, right;
-    int rankNext, inmsg, tag = 1, mpi_err;
+    int rankNext, inmsg, outmsg, tag = 1, mpi_err;
     int msg_source;
     MPI_Status mpi_status;
     unsigned int d = 0;
@@ -49,16 +49,17 @@ void __entry k_mpiPassUni(void * g_args)
 //    args->debug[d++] = right;
 
 //    rankNext = (rank < (size-1)) ? rank + 1 : 0;
-    inmsg = rank; /// start by passing the node's own rank
-//    do
-    for ()
+    outmsg = rank; /// start by passing the node's own rank
+    do
     {
 //        MPI_Send(&inmsg, 1, MPI_INT, rankNext, comm, tag);          /// pass on the message just received.
 //        MPI_Recv(&inmsg, 1, MPI_INT, msg_source, tag, comm, &mpi_status);
-        host_printf("core %i with rank: %i, sending message: %i to left: %i from right: %i\n", gid, rank, inmsg, left, right);
-        mpi_err = MPI_Sendrecv_replace(&inmsg, 1, MPI_INT, left, 1, right, 1, comm, &mpi_status);
-        host_printf("core with rank: %i, got a message: %i, err is %i\n", rank, inmsg, mpi_err);
-    } while (inmsg != rank);
+        host_printf("core %i with rank: %i, sending message: %i to left: %i from right: %i\n", gid, rank, outmsg, left, right);
+        mpi_err = MPI_Sendrecv_replace(&outmsg, 1, MPI_INT, left, 1, right, 1, comm, &mpi_status);
+//        mpi_err = MPI_Sendrecv(&outmsg, 1, MPI_INT, left, 1, &inmsg, 1, MPI_INT, right, 1, comm, &mpi_status);
+        host_printf("core with rank: %i, got a message: %i, err is %i\n", rank, outmsg, mpi_err);
+//        outmsg = inmsg;   // pass on the incoming message (for MPI_Sendrecv)
+    } while (outmsg != rank);
 
 phalt();
 
