@@ -11,7 +11,7 @@ COPRCC_FLAGS = -g --info
 COPRCC_DEFS = $(DEFS) -DCOPRTHR_MPI_COMPAT
 COPRCC_INCS = $(INCS)
 COPRCC_LIBS = -L/usr/local/browndeer/coprthr2/lib \
-	-lcoprthr_hostcall -lcoprthr_mpi -lcoprthr2_dev -lesyscall
+	-lcoprthr_hostcall -lcoprthr_mpi -lcoprthr2_dev -lesyscall 
 
 TARGET = passing.x passing.e32
 
