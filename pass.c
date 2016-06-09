@@ -62,8 +62,8 @@ int main()
         args.n = n;     /// passed to all kernels
 
  /// unicast
-/*
-        printf("about to call Unipass.\n");
+
+ /*       printf("about to call Unipass.\n");
        tstart = clock();
 //       coprthr_dexec(dd, ECORES, thr_passUni, &args, COPRTHR_E_WAIT);   // wait for the documentaiton for this call
         coprthr_mpiexec(dd, ECORES, thr_passUni, &args, sizeof(pass_args), 0);
@@ -136,20 +136,18 @@ int main()
 
 
 /// multicast
-
+/*
 /// Uncomment if using debug
-//        for (i=0; i<DEBUG_BUFFER; i++)
-//            debug[i] = -1;
-//       clmsync(stdacc, 0, debug, CL_MEM_DEVICE|CL_EVENT_WAIT);
-//
-//       tstart = clock();
-//       clforka(stdacc, 0, krnMulti, &ndr, CL_EVENT_WAIT, n, debug);
-//       cout << "forked - Multicast\n";
-//       tend = clock();
-//
-//       fout << n << "," << "multicast," << (tend - tstart) << endl;
-//       clmsync(stdacc, 0, debug, CL_MEM_HOST|CL_EVENT_WAIT);
 
+       tstart = clock();
+	   coprthr_mpiexec(dd, ECORES, krnMulti, &args, sizeof(args), 0);
+       tend = clock();
+//       cout <<
+        printf("forked - Multicast. Exec time was: %i\n", (int)(tend - tstart));
+
+//       fout << n << "," << "multicast," << (tend - tstart) << endl;
+       coprthr_dread(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int),COPRTHR_E_WAIT);
+*/
     /// Uncomment to use debug as output
  /*       i = 0;
         while (i<DEBUG_BUFFER)

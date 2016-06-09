@@ -9,11 +9,12 @@
 
 #include <host_stdio.h>
 
-#define REPEATCOUNT 100000
+//#define REPEATCOUNT 100000
+#define REPEATCOUNT 1
 #define MPI_BUF_SIZE 1024
 
 /// global for debugging
-int _debugSpace[4];
+//int _debugSpace[4];
 
 
 //__kernel void k_mpiPassUni(void * g_args)
@@ -24,6 +25,7 @@ void __entry k_mpiPassUni(void * g_args)
     unsigned int gid = coprthr_get_thread_id();
     int rank, size;
     int left, right;
+    int ringPos, gidOrder[CORECOUNT], coreNext, corePrev;
     int rankNext, inmsg, outmsg, tag = 1, mpi_err;
     int msg_source;
     MPI_Status mpi_status;
@@ -35,8 +37,11 @@ void __entry k_mpiPassUni(void * g_args)
     MPI_Comm comm = MPI_COMM_THREAD;
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
-    MPI_Cart_shift(comm, 0, 1, &left, &right);
-    host_printf("host: %i - after Cart Shift, right is %i, left is %i\n", rank, right, left);
+//    MPI_Cart_shift(comm, 0, 1, &left, &right);
+    initRing(&coreNext, &corePrev, &ringPos, gidOrder);
+    right = gidOrder[ringPos - 1];
+    left = gidOrder[ringPos + 1];
+    host_printf("host: %i - after initRing, right is %i, left is %i, ringpos is %i\n", rank, right, left, ringPos);
 
     d = rank * 5;
 
@@ -60,11 +65,11 @@ void __entry k_mpiPassUni(void * g_args)
         host_printf("core with rank: %i, got a message: %i, err is %i\n", rank, outmsg, mpi_err);
 //        outmsg = inmsg;   // pass on the incoming message (for MPI_Sendrecv)
     } while (outmsg != rank);
-
-phalt();
+//phalt();
 
     MPI_Finalize();
 }
+
 
 void initLocal(int * vLocal, int n, unsigned int base)
 {
@@ -82,7 +87,7 @@ void initLocal(int * vLocal, int n, unsigned int base)
 ///
 /// Unicast
 ///
-
+/*
 //__kernel void k_passUni(__global int g_n, __global int * g_debug)
 void __entry k_passUni(pass_args * pArgs)
 {
@@ -92,7 +97,7 @@ void __entry k_passUni(pass_args * pArgs)
     unsigned int d = 0;
     unsigned int firstI, lastI;
     unsigned int magnitude;
-    unsigned int  repeater = REPEATCOUNT;  /// add to the work load a litte
+    unsigned int  repeater = REPEATCOUNT;  /// add to the work load a little
 
     pass_args * args = (pass_args*)pArgs; /// local copy of g_n
     n = args->n;
@@ -121,17 +126,24 @@ void __entry k_passUni(pass_args * pArgs)
 
             coprthr_barrier(0);
 
-/// Uncomment to use g_debug as output - only do this if repeater == 1 (otherwise you will run out of room in the g_debug array)
-//                    if (gid == 10)
-//                        for (j=0; j< (CORECOUNT*n); j++)
-//                            g_debug[d++] = vLocal[j];
+/// Uncomment to use pArgs->debug as output - only do this if repeater == 1 (otherwise you will run out of room in the g_debug array)
+                    if (gid == 10)
+                    {
+                        host_printf("Core: 10 - ");
+                        for (j=0; j< (CORECOUNT*n); j++)
+                        {
+                            pArgs->debug[d++] = vLocal[j];
+                            host_printf(" %i,", vLocal[j]);
+                        }
+                        host_printf("\n");
+                    }
 
             magnitude = (magnitude == 0) ? 15 : magnitude - 1;
         }
         while (magnitude != ringIndex);
     }
 }
-
+*/
 ///
 /// Multicast
 ///
@@ -182,9 +194,16 @@ void __entry k_passMulti(pass_args * pArgs)
             magnitude++;
 
 /// Uncomment to use g_debug as output
-//                    if (gid == 10)
-//                        for (j=0; j< (CORECOUNT*n); j++)
-//                            g_debug[d++] = vLocal[j];
+            if (gid == 10)
+            {
+                host_printf("Core: 10 - ");
+                for (j=0; j< (CORECOUNT*n); j++)
+                {
+                    pArgs->debug[d++] = vLocal[j];
+                    host_printf(" %i,", vLocal[j]);
+                }
+                host_printf("\n");
+            }
         }
     }
 }

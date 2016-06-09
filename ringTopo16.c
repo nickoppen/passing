@@ -1,6 +1,6 @@
 #include "coreId16.h"
 
-void initRing(unsigned int * NEXT,unsigned int * PREV, unsigned int * ringIndex, unsigned int * gidOrder)
+void initRing(int * NEXT,int * PREV, int * ringIndex, int * gidOrder)
 {
 
     unsigned int gid = coprthr_corenum();
