@@ -39,8 +39,8 @@ void __entry k_mpiPassUni(void * g_args)
     MPI_Comm_size(comm, &size);
 //    MPI_Cart_shift(comm, 0, 1, &left, &right);
     initRing(&coreNext, &corePrev, &ringPos, gidOrder);
-    right = gidOrder[ringPos - 1];
-    left = gidOrder[ringPos + 1];
+    right = gidOrder[(ringPos == 0) ? 15 : (ringPos - 1)];
+    left = gidOrder[(ringPos == 15) ? 0 : (ringPos + 1)];
     host_printf("host: %i - after initRing, right is %i, left is %i, ringpos is %i\n", rank, right, left, ringPos);
 
     d = rank * 5;
