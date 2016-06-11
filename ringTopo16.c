@@ -108,3 +108,82 @@ void initRing(int * NEXT,int * PREV, int * ringIndex, int * gidOrder)
     }
 
 }
+
+void mpi_initRing(int rank, int * next, int * prev)
+{
+///
+/// - this assumes that core num and rank are the same !!!
+///
+
+    switch(rank)
+    {
+    case 0:
+        *next = 1;
+        *prev = 4;
+    break;
+    case 1:
+        *next = 2;
+        *prev = 0;
+    break;
+    case 2:
+        *next = 3;
+        *prev = 1;
+    break;
+    case 3:
+        *next = 7;
+        *prev = 2;
+    break;
+    case 4:
+        *next = 0;
+        *prev = 8;
+    break;
+    case 5:
+        *next = 9;
+        *prev = 6;
+    break;
+    case 6:
+        *next = 5;
+        *prev = 10;
+    break;
+    case 7:
+        *next = 11;
+        *prev = 3;
+    break;
+    case 8:
+        *next = 4;
+        *prev = 12;
+    break;
+    case 9:
+        *next = 13;
+        *prev = 5;
+    break;
+    case 10:
+        *next = 6;
+        *prev = 14;
+    break;
+    case 11:
+        *next = 15;
+        *prev = 7;
+    break;
+    case 12:
+        *next = 8;
+        *prev = 13;
+    break;
+    case 13:
+        *next = 12;
+        *prev = 9;
+    break;
+    case 14:
+        *next = 10;
+        *prev = 15;
+    break;
+    case 15:
+        *next = 14;
+        *prev = 11;
+    break;
+    default:
+        *next = 0;
+        *prev = 0;
+    break;
+    }
+}

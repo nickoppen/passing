@@ -24,9 +24,7 @@ void __entry k_mpiPassUni(void * g_args)
     int buf[DEBUG_BUFFER];
     unsigned int gid = coprthr_get_thread_id();
     int rank, size;
-    int left, right;
-    int ringPos, gidOrder[CORECOUNT], coreNext, corePrev;
-    int rankNext, inmsg, outmsg, tag = 1, mpi_err;
+    int rankNext, rankPrev, inmsg, outmsg, tag = 1, mpi_err;
     int msg_source;
     MPI_Status mpi_status;
     unsigned int d = 0;
@@ -38,10 +36,8 @@ void __entry k_mpiPassUni(void * g_args)
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
 //    MPI_Cart_shift(comm, 0, 1, &left, &right);
-    initRing(&coreNext, &corePrev, &ringPos, gidOrder);
-    right = gidOrder[(ringPos == 0) ? 15 : (ringPos - 1)];
-    left = gidOrder[(ringPos == 15) ? 0 : (ringPos + 1)];
-    host_printf("host: %i - after initRing, right is %i, left is %i, ringpos is %i\n", rank, right, left, ringPos);
+    mpi_initRing(rank, &rankNext, &rankPrev);
+    host_printf("host: %i - after initRing, next is %i, prev is %i\n", rank, rankNext, rankPrev);
 
     d = rank * 5;
 
@@ -59,8 +55,8 @@ void __entry k_mpiPassUni(void * g_args)
     {
 //        MPI_Send(&inmsg, 1, MPI_INT, rankNext, comm, tag);          /// pass on the message just received.
 //        MPI_Recv(&inmsg, 1, MPI_INT, msg_source, tag, comm, &mpi_status);
-        host_printf("core %i with rank: %i, sending message: %i to left: %i from right: %i\n", gid, rank, outmsg, left, right);
-        mpi_err = MPI_Sendrecv_replace(&outmsg, 1, MPI_INT, left, 1, right, 1, comm, &mpi_status);
+        host_printf("core %i with rank: %i, sending message: %i to next: %i from prev: %i\n", gid, rank, outmsg, rankNext, rankPrev);
+        mpi_err = MPI_Sendrecv_replace(&outmsg, 1, MPI_INT, rankNext, 1, rankPrev, 1, comm, &mpi_status);
 //        mpi_err = MPI_Sendrecv(&outmsg, 1, MPI_INT, left, 1, &inmsg, 1, MPI_INT, right, 1, comm, &mpi_status);
         host_printf("core with rank: %i, got a message: %i, err is %i\n", rank, outmsg, mpi_err);
 //        outmsg = inmsg;   // pass on the incoming message (for MPI_Sendrecv)
