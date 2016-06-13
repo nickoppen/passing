@@ -109,81 +109,115 @@ void initRing(int * NEXT,int * PREV, int * ringIndex, int * gidOrder)
 
 }
 
-void mpi_initRing(int rank, int * next, int * prev)
+void mpi_initRing(int rank, int * next, int * prev, int * ringIndex, int * rankOrder)
 {
 ///
 /// - this assumes that core num and rank are the same !!!
 ///
+
+    rankOrder[0] = 0;
+    rankOrder[1] = 1;
+    rankOrder[2] = 2;
+    rankOrder[3] = 3;
+    rankOrder[4] = 7;
+    rankOrder[5] = 11;
+    rankOrder[6] = 15;
+    rankOrder[7] = 14;
+    rankOrder[8] = 10;
+    rankOrder[9] = 6;
+    rankOrder[10] = 5;
+    rankOrder[11] = 9;
+    rankOrder[12] = 13;
+    rankOrder[13] = 12;
+    rankOrder[14] = 8;
+    rankOrder[15] = 4;
 
     switch(rank)
     {
     case 0:
         *next = 1;
         *prev = 4;
+        *ringIndex = 0;
     break;
     case 1:
         *next = 2;
         *prev = 0;
+        *ringIndex = 1;
     break;
     case 2:
         *next = 3;
         *prev = 1;
+        *ringIndex = 2;
     break;
     case 3:
         *next = 7;
         *prev = 2;
+        *ringIndex = 3;
     break;
     case 4:
         *next = 0;
         *prev = 8;
+        *ringIndex = 15;
     break;
     case 5:
         *next = 9;
         *prev = 6;
+        *ringIndex = 10;
     break;
     case 6:
         *next = 5;
         *prev = 10;
+        *ringIndex = 9;
     break;
     case 7:
         *next = 11;
         *prev = 3;
+        *ringIndex = 4;
     break;
     case 8:
         *next = 4;
         *prev = 12;
+        *ringIndex = 14;
     break;
     case 9:
         *next = 13;
         *prev = 5;
+        *ringIndex = 11;
     break;
     case 10:
         *next = 6;
         *prev = 14;
+        *ringIndex = 8;
     break;
     case 11:
         *next = 15;
         *prev = 7;
+        *ringIndex = 5;
     break;
     case 12:
         *next = 8;
         *prev = 13;
+        *ringIndex = 13;
     break;
     case 13:
         *next = 12;
         *prev = 9;
+        *ringIndex = 12;
     break;
     case 14:
         *next = 10;
         *prev = 15;
+        *ringIndex = 7;
     break;
     case 15:
         *next = 14;
         *prev = 11;
+        *ringIndex = 6;
     break;
     default:
         *next = 0;
         *prev = 0;
+        *ringIndex = -1;
     break;
     }
 }
