@@ -56,7 +56,7 @@ int main()
         args.debug = (int*)dev_debug;
 
 //    for (n=1; n<=16; n++)
-    for (n=1; n<=1; n++)
+    for (n=3; n<=16; n=n+2)
     {
         //std::cout << "n is equal to: " << n << "\n";
         args.n = n;     /// passed to all kernels
@@ -108,9 +108,9 @@ int main()
 
 //       fout << n << "," << "mpi unicast," << (tend - tstart) << "\n";
 
-       coprthr_dread(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int),COPRTHR_E_WAIT);
-        printf("Read return data from shared memory\n");
-
+//       coprthr_dread(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int),COPRTHR_E_WAIT);
+//        printf("Read return data from shared memory\n");
+/*
       /// Uncomment to use debug as output
       i = 0;
         while (i<DEBUG_BUFFER)
@@ -133,7 +133,7 @@ int main()
         printf("\n");
 //        fout << std::endl;
 //        fout.flush();
-
+*/
 
 /// multicast
 /*
