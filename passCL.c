@@ -47,7 +47,6 @@ void __entry k_mpiPassUni(void * g_args)
     host_printf("host: %i - after initRing, next is %i, prev is %i\n", rank, rankNext, rankPrev);
 
     initLocal(vLocal, n, rank);                    /// the global_id has been replaced by the rank as the primary "logical" location
-
 //    d = rank * 5;
 
 //    host_printf("k_mpiPassUni: thread %i has d at %i, debug[d] is %i, size is %i\n", gid, d, args->debug[d], size);
@@ -62,29 +61,25 @@ void __entry k_mpiPassUni(void * g_args)
 //    inmsg = vLocal + (n * msg_source);
 
 //         copy in copy out because non replace is not working
-     memcpy(outmsg, vLocal + (n * rank), n * sizeof(int));    /// copy in the local core's data to start the process
-     memcpy(_debugSpace, vLocal + (n*rank), n * sizeof(int));
-     phalt();
+    memcpy(outmsg, vLocal + (n * rank), n * sizeof(int));    /// copy in the local core's data to start the process
 
     for (i = 0; i < CORECOUNT; i++)
     {
-
 //        host_printf("core %i with rank: %i, sending message: %i, %i, %i, %i to next: %i from prev: %i, src is %i\n", gid, rank, outmsg[0], outmsg[1], outmsg[2], outmsg[3],  rankNext, rankPrev, msg_source);
 
         mpi_err = MPI_Sendrecv_replace(outmsg, n, MPI_INT, rankNext, 1, rankPrev, 1, comm, &mpi_status);
-        msg_sourceIndex = ringIndex - i;        /// getting data from previous elements in the ring and passing it "upwards"
+        msg_sourceIndex = ringIndex - (i+1);        /// getting data from previous elements in the ring and passing it "upwards"
         msg_source = rankOrder[(msg_sourceIndex >= 0) ? msg_sourceIndex : msg_sourceIndex + CORECOUNT];
         memcpy(vLocal + (n * msg_source), outmsg, n * sizeof(int));   /// keep thing incoming data
-        memcpy(_debugSpace + (n * msg_source), outmsg, n * sizeof(int));   /// keep thing incoming data
 //        host_printf("core with rank: %i, got a message: %i, %i, %i, %i, err is %i\n", rank, outmsg[0], outmsg[1], outmsg[2], outmsg[3], mpi_err);
 //phalt();
 
 //        mpi_err = MPI_Sendrecv(outmsg, n, MPI_INT, rankNext, 1, inmsg, n, MPI_INT, rankPrev, 1, comm, &mpi_status);
 //        outmsg = inmsg; // non replcace
 /// Uncomment to use pArgs->debug as output - only do this if repeater == 1 (otherwise you will run out of room in the g_debug array)
-        if (rank == 10)
+        if (rank == 0)
         {
-            host_printf("10-");
+            host_printf("0-");
             for (j=0; j< (CORECOUNT*n); j++)
             {
 //                args->debug[d++] = vLocal[j];
