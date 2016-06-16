@@ -21,7 +21,7 @@ int _debugSpace[256];
 void __entry k_mpiPassUni(void * g_args)
 {
     pass_args * args = (pass_args *)g_args;
-    int n = args->n;
+    int n = 3;//args->n;
 //    int buf[DEBUG_BUFFER];
     unsigned int gid = coprthr_get_thread_id();
     int rank, size;
@@ -62,16 +62,20 @@ void __entry k_mpiPassUni(void * g_args)
 
 //         copy in copy out because non replace is not working
     memcpy(outmsg, vLocal + (n * rank), n * sizeof(int));    /// copy in the local core's data to start the process
+//    memcpy(_debugSpace, vLocal + (n * rank), n * sizeof(int));    /// copy in the local core's data to start the process
+//    phalt();
+//    for (i=0;i<256;i++) _debugSpace[i] = 0;
 
     for (i = 0; i < CORECOUNT; i++)
     {
-//        host_printf("core %i with rank: %i, sending message: %i, %i, %i, %i to next: %i from prev: %i, src is %i\n", gid, rank, outmsg[0], outmsg[1], outmsg[2], outmsg[3],  rankNext, rankPrev, msg_source);
+        if (rank==5) host_printf("core %i with rank: %i, sending message: %i, %i, %i, %i to next: %i from prev: %i, src is %i\n", gid, rank, outmsg[0], outmsg[1], outmsg[2], outmsg[3],  rankNext, rankPrev, msg_source);
 
         mpi_err = MPI_Sendrecv_replace(outmsg, n, MPI_INT, rankNext, 1, rankPrev, 1, comm, &mpi_status);
         msg_sourceIndex = ringIndex - (i+1);        /// getting data from previous elements (a negative direction) in the ring and passing it onwards (a positive direction)
         msg_source = rankOrder[(msg_sourceIndex >= 0) ? msg_sourceIndex : msg_sourceIndex + CORECOUNT];
         memcpy(vLocal + (n * msg_source), outmsg, n * sizeof(int));   /// keep thing incoming data
-//        host_printf("core with rank: %i, got a message: %i, %i, %i, %i, err is %i\n", rank, outmsg[0], outmsg[1], outmsg[2], outmsg[3], mpi_err);
+//        memcpy(_debugSpace, outmsg, n * sizeof(int));   /// keep thing incoming data
+        if (rank==9) host_printf("core with rank: %i, got a message: %i, %i, %i, index of sender: %i, rank of sender: %i, vLocal offset: %i\n", rank, outmsg[0], outmsg[1], outmsg[2], (msg_sourceIndex >= 0) ? msg_sourceIndex : msg_sourceIndex + CORECOUNT, msg_source, n*msg_source);
 //phalt();
 
 //        outmsg = last inmsg
@@ -79,18 +83,17 @@ void __entry k_mpiPassUni(void * g_args)
 //        mpi_err = MPI_Sendrecv(outmsg, n, MPI_INT, rankNext, 1, inmsg, n, MPI_INT, rankPrev, 1, comm, &mpi_status);
 //        outmsg = inmsg; // non replcace
 /// Uncomment to use pArgs->debug as output - only do this if repeater == 1 (otherwise you will run out of room in the g_debug array)
-        if (rank == 0)
+/*        if (rank == 1)
         {
-            host_printf("0-");
+            host_printf("1-");
             for (j=0; j< (CORECOUNT*n); j++)
             {
 //                args->debug[d++] = vLocal[j];
                 host_printf("%i,", vLocal[j]);
             }
             host_printf("\n");
-        }
+        }*/
     }
-//phalt();
 
     MPI_Finalize();
 }
