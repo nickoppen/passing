@@ -21,7 +21,6 @@ CL: passing.e32
 
 .PHONY: clean install uninstall $(SUBDIRS)
 
-.SUFFIXES:
 .SUFFIXES: .c .o .x .e32
 
 passing.x: pass.o

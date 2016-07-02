@@ -21,7 +21,7 @@ int _debugSpace[256];
 void __entry k_mpiPassUni(void * g_args)
 {
     pass_args * args = (pass_args *)g_args;
-    int n = 3;//args->n;
+    int n = args->n;
 //    int buf[DEBUG_BUFFER];
     unsigned int gid = coprthr_get_thread_id();
     int rank, size;
@@ -42,33 +42,25 @@ void __entry k_mpiPassUni(void * g_args)
     MPI_Comm comm = MPI_COMM_THREAD;
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
-//    MPI_Cart_shift(comm, 0, 1, &left, &right);
     mpi_initRing(rank, &rankNext, &rankPrev, &ringIndex, rankOrder);
 //    host_printf("host: %i - after initRing, next is %i, prev is %i\n", rank, rankNext, rankPrev);
 
     initLocal(vLocal, n, rank);                    /// the global_id has been replaced by the rank as the primary "logical" location
 //    d = rank * 5;
 
-//    host_printf("k_mpiPassUni: thread %i has d at %i, debug[d] is %i, size is %i\n", gid, d, args->debug[d], size);
-
-//    args->debug[d++] = gid+1;
-//    args->debug[d++] = rank+16;
-//    args->debug[d++] = size+32;
-//    args->debug[d++] = left;
-//    args->debug[d++] = right;
+    host_printf("k_mpiPassUni: thread %i has d at %i, debug[d] is %i, size is %i\n", gid, d, args->debug[d], size);
 
 //    outmsg = vLocal + (n * rank);
 //    inmsg = vLocal + (n * msg_source);
 
 //         copy in copy out because non replace is not working
     memcpy(outmsg, vLocal + (n * rank), n * sizeof(int));    /// copy in the local core's data to start the process
-//    memcpy(_debugSpace, vLocal + (n * rank), n * sizeof(int));    /// copy in the local core's data to start the process
 //    phalt();
 //    for (i=0;i<256;i++) _debugSpace[i] = 0;
 
     for (i = 0; i < CORECOUNT; i++)
     {
-        if (rank==5) host_printf("core %i with rank: %i, sending message: %i, %i, %i, %i to next: %i from prev: %i, src is %i\n", gid, rank, outmsg[0], outmsg[1], outmsg[2], outmsg[3],  rankNext, rankPrev, msg_source);
+//        if (rank==5) host_printf("core %i with rank: %i, sending message: %i, %i, %i, %i to next: %i from prev: %i, src is %i\n", gid, rank, outmsg[0], outmsg[1], outmsg[2], outmsg[3],  rankNext, rankPrev, msg_source);
 
         mpi_err = MPI_Sendrecv_replace(outmsg, n, MPI_INT, rankNext, 1, rankPrev, 1, comm, &mpi_status);
         msg_sourceIndex = ringIndex - (i+1);        /// getting data from previous elements (a negative direction) in the ring and passing it onwards (a positive direction)
@@ -115,7 +107,6 @@ void initLocal(int * vLocal, int n, unsigned int base)
 ///
 /// Unicast
 ///
-/*
 //__kernel void k_passUni(__global int g_n, __global int * g_debug)
 void __entry k_passUni(pass_args * pArgs)
 {
@@ -171,7 +162,7 @@ void __entry k_passUni(pass_args * pArgs)
         while (magnitude != ringIndex);
     }
 }
-*/
+
 ///
 /// Multicast
 ///
@@ -239,17 +230,27 @@ void __entry k_passMulti(pass_args * pArgs)
 //__kernel void k_mpiPassMulti(__global int g_n, __global int * g_debug)
 void __entry k_mpiPassMulti(pass_args * pArgs)
 {
+    int i, n;
     int rank, size;
-    int left, right;
+    int rankNext, rankPrev, tag = 1, mpi_err;
+    int rankOrder[CORECOUNT];
+    int ringIndex;
 
     MPI_Status status;
     MPI_Init(0,MPI_BUF_SIZE);
     MPI_Comm comm = MPI_COMM_THREAD;
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
-    MPI_Cart_shift(comm, 0, 1, &left, &right);
+
+    mpi_initRing(rank, &rankNext, &rankPrev, &ringIndex, rankOrder);
+//    host_printf("host: %i - after initRing, next is %i, prev is %i\n", rank, rankNext, rankPrev);
+
+    int vLocal[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    initLocal(vLocal, n, rank);                    /// the global_id has been replaced by the rank as the primary "logical" location
 
     host_printf("k_mpiPassMulti: thread  has d at \n");
+
+
 
     MPI_Finalize();
 }
@@ -261,7 +262,7 @@ void __entry k_mpiPassMulti(pass_args * pArgs)
 
 
 //__kernel void k_passBroadcastNoWait(__global int g_n, __global int * g_debug)
-void __entry k_passBroadcastNoWait(pass_args * pArgs)
+void __entry k_passBroadcast(pass_args * pArgs)
 {
     unsigned int gid = coprthr_get_thread_id();
     unsigned int localCoreId;
@@ -308,10 +309,10 @@ void __entry k_passBroadcastNoWait(pass_args * pArgs)
 }
 
 //__kernel void k_mpiBroadcast(__global int g_n, __global int * g_debug)
-void __entry k_mpiBroadcast(pass_args * pArgs)
+void __entry k_mpiPassBroadcast(pass_args * pArgs)
 {
+    int i, n;
     int rank, size;
-    int left, right;
     unsigned int  repeater = REPEATCOUNT;  /// add to the work load a litte
     unsigned int execTime;
 
@@ -320,15 +321,22 @@ void __entry k_mpiBroadcast(pass_args * pArgs)
     MPI_Comm comm = MPI_COMM_THREAD;
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
-    MPI_Cart_shift(comm, 0, 1, &left, &right);
+
+    int vLocal[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    initLocal(vLocal, n, rank);                    /// the global_id has been replaced by the rank as the primary "logical" location
 
     init_timer();
     init_clock();
 
     host_printf("k_mpiPassMulti: thread  has d at \n");
-    while (repeater--)
-    {
-    }
+//    while (repeater--)
+//    {
+        for (i=0; i < size; i++)
+        {
+
+            //coprthr_mpi_Bcast();
+        }
+//    }
 
     execTime = get_clock();     /// get the number of clock ticks
 

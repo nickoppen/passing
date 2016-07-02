@@ -25,8 +25,8 @@ int main()
 //    fbuf.open("pass.csv", std::ios::out);
 //    std::ostream fout(&fbuf);
 //    char strInfo[128];
-//    int host_debug[DEBUG_BUFFER];
-    int * host_debug = (int*)malloc(DEBUG_BUFFER*sizeof(int));
+    int host_debug[DEBUG_BUFFER];
+//    int * host_debug = (int*)malloc(DEBUG_BUFFER*sizeof(int));
     pass_args args;
 
 	int dd = coprthr_dopen(COPRTHR_DEVICE_E32,COPRTHR_O_THREAD);
@@ -42,28 +42,26 @@ int main()
 	coprthr_program_t prg = coprthr_cc_read_bin("./passing.e32", 0);
 //	coprthr_kernel_t thr_passUni = (coprthr_sym_t)coprthr_getsym(prg,"k_passUni");
 	coprthr_sym_t thr_mpiPassUni = (coprthr_sym_t)coprthr_getsym(prg,"k_mpiPassUni");
-//	std::cout << "prg=" << prg << " thr mpiPassUni=" << thr_mpiPassUni  << "\n";
-//   coprthr_sym_t krnUni = clsym(stdacc, openHandle, "k_passUni", CLLD_NOW);
-//   coprthr_sym_t krnMPIUni = clsym(stdacc, openHandle, "k_mpiPassUni", CLLD_NOW);
-//   coprthr_sym_t krnMulti = (coprthr_sym_t)coprthr_getsym(prg, "k_passMulti");
-//   coprthr_sym_t krnBroadcast = clsym(stdacc, openHandle, "k_passBroadcastWait", CLLD_NOW);
-//   coprthr_sym_t krnNoWait = clsym(stdacc, openHandle, "k_passBroadcastNoWait", CLLD_NOW);
+//   coprthr_sym_t thr_mpiMulti = clsym(stdacc, openHandle, "k_mpiPassMulti", CLLD_NOW);
+//   coprthr_sym_t thr_Multi = (coprthr_sym_t)coprthr_getsym(prg, "k_passMulti");
+//   coprthr_sym_t thr_mpiBroadcast = clsym(stdacc, openHandle, "k_mpiPassBroadcast", CLLD_NOW);
+//   coprthr_sym_t thr_Broadcast = clsym(stdacc, openHandle, "k_passBroadcast", CLLD_NOW);
 
        coprthr_mem_t dev_debug = (coprthr_mem_t)coprthr_dmalloc(dd, DEBUG_BUFFER*sizeof(int), 0);             /// Allocate some space on the epiphany for debug
         for (i=0; i<DEBUG_BUFFER; i++)
             host_debug[i] = -1;
         coprthr_dwrite(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int), COPRTHR_E_WAIT);
-        args.debug = (int*)dev_debug;
+        args.debug = coprthr_memptr(dev_debug, 0);
 
 //    for (n=1; n<=16; n++)
-    for (n=3; n<=16; n=n+2)
+    for (n=3; n<=3; n=n+2)
     {
         //std::cout << "n is equal to: " << n << "\n";
         args.n = n;     /// passed to all kernels
 
  /// unicast
-
- /*       printf("about to call Unipass.\n");
+/*
+        printf("about to call Unipass.\n");
        tstart = clock();
 //       coprthr_dexec(dd, ECORES, thr_passUni, &args, COPRTHR_E_WAIT);   // wait for the documentaiton for this call
         coprthr_mpiexec(dd, ECORES, thr_passUni, &args, sizeof(pass_args), 0);
@@ -108,15 +106,15 @@ int main()
 
 //       fout << n << "," << "mpi unicast," << (tend - tstart) << "\n";
 
-//       coprthr_dread(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int),COPRTHR_E_WAIT);
+       coprthr_dread(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int),COPRTHR_E_WAIT);
 //        printf("Read return data from shared memory\n");
-/*
+
       /// Uncomment to use debug as output
       i = 0;
         while (i<DEBUG_BUFFER)
         {
-//            if (host_debug[i] != -1)
-            if (i < (16*5))
+            if (host_debug[i] != -1)
+//            if (i < (16*5))
             {
 //                fout << host_debug[i++];
                 printf("%d, ", host_debug[i++]);
@@ -130,10 +128,10 @@ int main()
             else
                 break;
         }
-        printf("\n");
+        printf("\neod\n");
 //        fout << std::endl;
 //        fout.flush();
-*/
+
 
 /// multicast
 /*
