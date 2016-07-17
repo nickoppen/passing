@@ -1,7 +1,7 @@
 #include "ringTopo16.c"
 #include "passing.h"
 #include "timer.c"
-//#include <coprthr.h>
+#include <coprthr.h>
 //#include <coprthr2.h>
 #include <coprthr_mpi.h>
 
@@ -14,20 +14,30 @@
 #define MPI_BUF_SIZE 1024
 
 /// global for debugging
-int _debugSpace[256];
+//int _debugSpace[256];
+
+void initLocal(int * vLocal, int n, unsigned int base)
+{
+    unsigned int firstI, lastI, i;
+
+    firstI = base * n;                       /// the data to be passed is based on the core's global_id. This favours broadcast which is just iterates through the global ids writing to all. Unicast and Multicast are more complex because they
+    lastI = firstI + n;                     /// write to the cores neighbour(s) which may not have a gid + or - 1. Therefore the gidOrder array must be looked up to see where the data came from.
+    for (i=firstI; i<lastI; i++)
+        vLocal[i] = base + 100;            /// ADD 100 to distinguish the initialised value from the default value which is 0
+
+}
 
 
-//__kernel void k_mpiPassUni(void * g_args)
 void __entry k_mpiPassUni(void * g_args)
 {
     pass_args * args = (pass_args *)g_args;
     int n = args->n;
-//    int buf[DEBUG_BUFFER];
     unsigned int gid = coprthr_get_thread_id();
     int rank, size;
     int rankNext, rankPrev, tag = 1, mpi_err;
     int rankOrder[CORECOUNT];
     int ringIndex;
+    int newI;
 //    int * outmsg, * inmsg;    //non replace
     int outmsg[CORECOUNT];      // REPLACE
     int msg_source, i, msg_sourceIndex;
@@ -36,27 +46,21 @@ void __entry k_mpiPassUni(void * g_args)
 
     int vLocal[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-//    e_dma_copy(buf, args->debug, DEBUG_BUFFER*sizeof(int));
     MPI_Status status;
     MPI_Init(0, MPI_BUF_SIZE);
     MPI_Comm comm = MPI_COMM_THREAD;
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
-    mpi_initRing(rank, &rankNext, &rankPrev, &ringIndex, rankOrder);
-//    host_printf("host: %i - after initRing, next is %i, prev is %i\n", rank, rankNext, rankPrev);
+    mpi_initRing(rank, &rankNext, &rankPrev, &ringIndex, rankOrder);        /// the data goes to renkNext and comes from rankPrev
 
     initLocal(vLocal, n, rank);                    /// the global_id has been replaced by the rank as the primary "logical" location
 //    d = rank * 5;
 
     host_printf("k_mpiPassUni: thread %i has d at %i, debug[d] is %i, size is %i\n", gid, d, args->debug[d], size);
 
-//    outmsg = vLocal + (n * rank);
-//    inmsg = vLocal + (n * msg_source);
-
 //         copy in copy out because non replace is not working
     memcpy(outmsg, vLocal + (n * rank), n * sizeof(int));    /// copy in the local core's data to start the process
 //    phalt();
-//    for (i=0;i<256;i++) _debugSpace[i] = 0;
 
     for (i = 0; i < CORECOUNT; i++)
     {
@@ -70,10 +74,14 @@ void __entry k_mpiPassUni(void * g_args)
         if (rank==9) host_printf("core with rank: %i, got a message: %i, %i, %i, index of sender: %i, rank of sender: %i, vLocal offset: %i\n", rank, outmsg[0], outmsg[1], outmsg[2], (msg_sourceIndex >= 0) ? msg_sourceIndex : msg_sourceIndex + CORECOUNT, msg_source, n*msg_source);
 //phalt();
 
-//        outmsg = last inmsg
-//        inmsg = vLocal + (n * (rank - i));     // I think
+/// send the data from vLocal and insert the incoming data directly into vlocal
+        LOOPINGDECREMENT(newI, ringIndex, i);
+//        outmsg = vLocal + (sizeof(int) * (n * rankOrder[newI]));       /// we pass on the data from the down stream core
+        LOOPINGDECREMENT(newI, ringIndex, i + 1);
+//        inmsg = vLocal + (sizeof(int) * (n * rankOrder[newI]));     /// we receive data from the one before the previous core
+
 //        mpi_err = MPI_Sendrecv(outmsg, n, MPI_INT, rankNext, 1, inmsg, n, MPI_INT, rankPrev, 1, comm, &mpi_status);
-//        outmsg = inmsg; // non replcace
+
 /// Uncomment to use pArgs->debug as output - only do this if repeater == 1 (otherwise you will run out of room in the g_debug array)
 /*        if (rank == 1)
         {
@@ -91,23 +99,11 @@ void __entry k_mpiPassUni(void * g_args)
 }
 
 
-void initLocal(int * vLocal, int n, unsigned int base)
-{
-    unsigned int firstI, lastI, i;
-
-    firstI = base * n;                       /// the data to be passed is based on the core's global_id. This favours broadcast which is just iterates through the global ids writing to all. Unicast and Multicast are more complex because they
-    lastI = firstI + n;                     /// write to the cores neighbour(s) which may not have a gid + or - 1. Therefore the gidOrder array must be looked up to see where the data came from.
-    for (i=firstI; i<lastI; i++)
-        vLocal[i] = base + 100;            /// ADD 100 to distinguish the initialised value from the default value which is 0
-
-}
-
 
 
 ///
 /// Unicast
 ///
-//__kernel void k_passUni(__global int g_n, __global int * g_debug)
 void __entry k_passUni(pass_args * pArgs)
 {
     unsigned int gid = coprthr_get_thread_id();
@@ -167,7 +163,6 @@ void __entry k_passUni(pass_args * pArgs)
 /// Multicast
 ///
 
-//__kernel void k_passMulti(__global int g_n, __global int * g_debug)
 void __entry k_passMulti(pass_args * pArgs)
 {
     unsigned int gid = coprthr_get_thread_id();
@@ -227,14 +222,16 @@ void __entry k_passMulti(pass_args * pArgs)
     }
 }
 
-//__kernel void k_mpiPassMulti(__global int g_n, __global int * g_debug)
 void __entry k_mpiPassMulti(pass_args * pArgs)
 {
-    int i, n;
+    int n, magnitude, magMax;
     int rank, size;
     int rankNext, rankPrev, tag = 1, mpi_err;
     int rankOrder[CORECOUNT];
     int ringIndex;
+    int * outmsg_up, * inmsg_up;
+    int * outmsg_down, * inmsg_down;
+    int newI;
 
     MPI_Status status;
     MPI_Init(0,MPI_BUF_SIZE);
@@ -245,12 +242,45 @@ void __entry k_mpiPassMulti(pass_args * pArgs)
     mpi_initRing(rank, &rankNext, &rankPrev, &ringIndex, rankOrder);
 //    host_printf("host: %i - after initRing, next is %i, prev is %i\n", rank, rankNext, rankPrev);
 
+    n = pArgs->n;
     int vLocal[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     initLocal(vLocal, n, rank);                    /// the global_id has been replaced by the rank as the primary "logical" location
 
     host_printf("k_mpiPassMulti: thread  has d at \n");
 
+    magMax = CORECOUNT / 2;
+    magnitude = 0;
+    while (magnitude < magMax)
+    {
+//        if (rank==5) host_printf("core %i with rank: %i, sending message: %i, %i, %i, %i to next: %i from prev: %i, src is %i\n", gid, rank, outmsg[0], outmsg[1], outmsg[2], outmsg[3],  rankNext, rankPrev, msg_source);
 
+/// need to check boundry conditions
+
+        LOOPINGINCREMENT(newI, ringIndex, magnitude);    /// ringIndex + magnitude looped if over 15
+        outmsg_down = vLocal + (sizeof(int) * (n * rankOrder[newI]));
+        LOOPINGINCREMENT(newI, ringIndex, magnitude + 1);    /// ringIndex + magnitude + 1 looped if over 15
+        inmsg_down = vLocal + (sizeof(int) * (n * rankOrder[newI]));
+        LOOPINGDECREMENT(newI, ringIndex, magnitude);
+        outmsg_up = vLocal + (sizeof(int) * (n * rankOrder[newI]));
+        LOOPINGDECREMENT(newI, ringIndex, magnitude + 1);
+        inmsg_up = vLocal + (sizeof(int) * (n * rankOrder[newI]));
+
+//        mpi_err = MPI_Sendrecv(outmsg_up, n, MPI_INT, rankNext, 1, inmsg_up, n, MPI_INT, rankPrev, 1, comm, &mpi_status);
+//        mpi_err = MPI_Sendrecv(outmsg_down, n, MPI_INT, rankPrev, 1, inmsg_down, n, MPI_INT, rankNext, 1, comm, &mpi_status);
+
+/// Uncomment to use pArgs->debug as output - only do this if repeater == 1 (otherwise you will run out of room in the g_debug array)
+/*        if (rank == 1)
+        {
+            host_printf("1-");
+            for (j=0; j< (CORECOUNT*n); j++)
+            {
+//                args->debug[d++] = vLocal[j];
+                host_printf("%i,", vLocal[j]);
+            }
+            host_printf("\n");
+        }*/
+        magnitude++;
+    }
 
     MPI_Finalize();
 }
@@ -261,7 +291,6 @@ void __entry k_mpiPassMulti(pass_args * pArgs)
 ///
 
 
-//__kernel void k_passBroadcastNoWait(__global int g_n, __global int * g_debug)
 void __entry k_passBroadcast(pass_args * pArgs)
 {
     unsigned int gid = coprthr_get_thread_id();
@@ -308,11 +337,11 @@ void __entry k_passBroadcast(pass_args * pArgs)
 
 }
 
-//__kernel void k_mpiBroadcast(__global int g_n, __global int * g_debug)
 void __entry k_mpiPassBroadcast(pass_args * pArgs)
 {
-    int i, n;
+    int i, n, step;
     int rank, size;
+    int * pBuffer;
     unsigned int  repeater = REPEATCOUNT;  /// add to the work load a litte
     unsigned int execTime;
 
@@ -329,14 +358,16 @@ void __entry k_mpiPassBroadcast(pass_args * pArgs)
     init_clock();
 
     host_printf("k_mpiPassMulti: thread  has d at \n");
-//    while (repeater--)
-//    {
+    pBuffer = vLocal;
+    step = n * sizeof(int);
+    while (repeater--)
+    {
         for (i=0; i < size; i++)
         {
-
-            //coprthr_mpi_Bcast();
+            //coprthr_mpi_Bcast(pBuffer, n, MPI_INT, i, comm); not implemented yet
+            pBuffer += step;
         }
-//    }
+    }
 
     execTime = get_clock();     /// get the number of clock ticks
 

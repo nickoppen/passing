@@ -1,4 +1,6 @@
 #define CORECOUNT 16
+#define MAXCORE 15
+#define MINCORE 0
 #define LOCAL_MEM_ADDRESS_BASE() (e_get_coreid() * 0x100000)
 
 #define core00 0x80800000
@@ -20,6 +22,9 @@
 
 #define NEIGHBOUR_LOC(CORE, STRUCTURE, INDEX, SIZEOFTYPE) (CORE + ((unsigned int)STRUCTURE) + (INDEX * SIZEOFTYPE))
 #define NEIGHBOR_LOC(CORE, STRUCTURE, INDEX, SIZEOFTYPE) (CORE + ((unsigned int)STRUCTURE) + (INDEX * SIZEOFTYPE))      /// for those who use the "alternative" spelling
+
+#define LOOPINGINCREMENT(newVal, val, inc) newVal = val + inc; if (newVal > MAXCORE) newVal = newVal - CORECOUNT;
+#define LOOPINGDECREMENT(newVal, val, dec) newVal = val - dec; if (newVal < MINCORE) newVal = newVal + CORECOUNT;
 
 /// usage:
 //
