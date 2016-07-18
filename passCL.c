@@ -71,14 +71,15 @@ void __entry k_mpiPassUni(void * g_args)
         msg_source = rankOrder[(msg_sourceIndex >= 0) ? msg_sourceIndex : msg_sourceIndex + CORECOUNT];
         memcpy(vLocal + (n * msg_source), outmsg, n * sizeof(int));   /// keep thing incoming data
 //        memcpy(_debugSpace, outmsg, n * sizeof(int));   /// keep thing incoming data
-        if (rank==9) host_printf("core with rank: %i, got a message: %i, %i, %i, index of sender: %i, rank of sender: %i, vLocal offset: %i\n", rank, outmsg[0], outmsg[1], outmsg[2], (msg_sourceIndex >= 0) ? msg_sourceIndex : msg_sourceIndex + CORECOUNT, msg_source, n*msg_source);
+///        if (rank==9) host_printf("core with rank: %i, got a message: %i, %i, %i, index of sender: %i, rank of sender: %i, vLocal offset: %i\n", rank, outmsg[0], outmsg[1], outmsg[2], (msg_sourceIndex >= 0) ? msg_sourceIndex : msg_sourceIndex + CORECOUNT, msg_source, n*msg_source);
 //phalt();
 
 /// send the data from vLocal and insert the incoming data directly into vlocal
         LOOPINGDECREMENT(newI, ringIndex, i);
 //        outmsg = vLocal + (sizeof(int) * (n * rankOrder[newI]));       /// we pass on the data from the down stream core
-        LOOPINGDECREMENT(newI, ringIndex, i + 1);
+        LOOPINGDECREMENT(newI, ringIndex, (i + 1));
 //        inmsg = vLocal + (sizeof(int) * (n * rankOrder[newI]));     /// we receive data from the one before the previous core
+//        host_printf("core with rank: %i, ringIndex: %i, iteration: %i, msg_source: %i, in: %i\n", rank, ringIndex, i, msg_source, rankOrder[newI]);
 
 //        mpi_err = MPI_Sendrecv(outmsg, n, MPI_INT, rankNext, 1, inmsg, n, MPI_INT, rankPrev, 1, comm, &mpi_status);
 
@@ -258,11 +259,11 @@ void __entry k_mpiPassMulti(pass_args * pArgs)
 
         LOOPINGINCREMENT(newI, ringIndex, magnitude);    /// ringIndex + magnitude looped if over 15
         outmsg_down = vLocal + (sizeof(int) * (n * rankOrder[newI]));
-        LOOPINGINCREMENT(newI, ringIndex, magnitude + 1);    /// ringIndex + magnitude + 1 looped if over 15
+        LOOPINGINCREMENT(newI, ringIndex, (magnitude + 1));    /// ringIndex + magnitude + 1 looped if over 15
         inmsg_down = vLocal + (sizeof(int) * (n * rankOrder[newI]));
         LOOPINGDECREMENT(newI, ringIndex, magnitude);
         outmsg_up = vLocal + (sizeof(int) * (n * rankOrder[newI]));
-        LOOPINGDECREMENT(newI, ringIndex, magnitude + 1);
+        LOOPINGDECREMENT(newI, ringIndex, (magnitude + 1));
         inmsg_up = vLocal + (sizeof(int) * (n * rankOrder[newI]));
 
 //        mpi_err = MPI_Sendrecv(outmsg_up, n, MPI_INT, rankNext, 1, inmsg_up, n, MPI_INT, rankPrev, 1, comm, &mpi_status);
