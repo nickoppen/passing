@@ -2,7 +2,6 @@
 
 #include <e_ctimers.h>
 #include <stdbool.h>
-//#include "util/types.h"
 
 bool initialized = false;
 

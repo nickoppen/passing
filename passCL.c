@@ -1,6 +1,7 @@
 #include "ringTopo16.c"
 #include "passing.h"
-#include "timer.c"
+#include "timer.h"
+//#include "timer.c"
 #include <coprthr.h>
 //#include <coprthr2.h>
 #include <coprthr_mpi.h>
@@ -28,6 +29,9 @@ void initLocal(int * vLocal, int n, unsigned int base)
 }
 
 
+///
+/// Unicast
+///
 void __entry k_mpiPassUni(void * g_args)
 {
     pass_args * args = (pass_args *)g_args;
@@ -43,6 +47,7 @@ void __entry k_mpiPassUni(void * g_args)
     int msg_source, i, msg_sourceIndex;
     MPI_Status mpi_status;
     unsigned int j, d = 0;
+    unsigned time_e, time_s, idle_e, idle_s;
 
     int vLocal[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -61,6 +66,7 @@ void __entry k_mpiPassUni(void * g_args)
 //         copy in copy out because non replace is not working
     memcpy(outmsg, vLocal + (n * rank), n * sizeof(int));    /// copy in the local core's data to start the process
 //    phalt();
+    STARTCLOCK(time_s);
 
     for (i = 0; i < CORECOUNT; i++)
     {
@@ -75,9 +81,9 @@ void __entry k_mpiPassUni(void * g_args)
 //phalt();
 
 /// send the data from vLocal and insert the incoming data directly into vlocal
-        LOOPINGDECREMENT(newI, ringIndex, i);
+//        LOOPINGDECREMENT(newI, ringIndex, i);
 //        outmsg = vLocal + (sizeof(int) * (n * rankOrder[newI]));       /// we pass on the data from the down stream core
-        LOOPINGDECREMENT(newI, ringIndex, (i + 1));
+//        LOOPINGDECREMENT(newI, ringIndex, (i + 1));
 //        inmsg = vLocal + (sizeof(int) * (n * rankOrder[newI]));     /// we receive data from the one before the previous core
 //        host_printf("core with rank: %i, ringIndex: %i, iteration: %i, msg_source: %i, in: %i\n", rank, ringIndex, i, msg_source, rankOrder[newI]);
 
@@ -95,16 +101,15 @@ void __entry k_mpiPassUni(void * g_args)
             host_printf("\n");
         }*/
     }
+    STOPCLOCK(time_e);
+
+    host_printf("Core with rank: %i, total time :%i\n", rank, time_s - time_e);
 
     MPI_Finalize();
 }
 
 
 
-
-///
-/// Unicast
-///
 void __entry k_passUni(pass_args * pArgs)
 {
     unsigned int gid = coprthr_get_thread_id();
@@ -160,10 +165,10 @@ void __entry k_passUni(pass_args * pArgs)
     }
 }
 
+
 ///
 /// Multicast
 ///
-
 void __entry k_passMulti(pass_args * pArgs)
 {
     unsigned int gid = coprthr_get_thread_id();
@@ -290,8 +295,6 @@ void __entry k_mpiPassMulti(pass_args * pArgs)
 ///
 /// Broadcast: transmit the node values calculated here to all other cores without waiting between sends.
 ///
-
-
 void __entry k_passBroadcast(pass_args * pArgs)
 {
     unsigned int gid = coprthr_get_thread_id();
@@ -355,8 +358,6 @@ void __entry k_mpiPassBroadcast(pass_args * pArgs)
     int vLocal[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     initLocal(vLocal, n, rank);                    /// the global_id has been replaced by the rank as the primary "logical" location
 
-    init_timer();
-    init_clock();
 
     host_printf("k_mpiPassMulti: thread  has d at \n");
     pBuffer = vLocal;
@@ -370,7 +371,6 @@ void __entry k_mpiPassBroadcast(pass_args * pArgs)
         }
     }
 
-    execTime = get_clock();     /// get the number of clock ticks
 
 
     MPI_Finalize();
