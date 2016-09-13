@@ -102,8 +102,7 @@ void __entry k_mpiPassUni(void * g_args)
         }*/
     }
     STOPCLOCK(time_e);
-
-    host_printf("Core with rank: %i, total time :%i\n", rank, time_s - time_e);
+    host_printf("MPI_Pass_Uni: Core with rank: %i, total time :%i\n", rank, time_s - time_e);
 
     MPI_Finalize();
 }
@@ -119,6 +118,7 @@ void __entry k_passUni(pass_args * pArgs)
     unsigned int firstI, lastI;
     unsigned int magnitude;
     unsigned int  repeater = REPEATCOUNT;  /// add to the work load a little
+    unsigned time_e, time_s, idle_e, idle_s;
 
     pass_args * args = (pass_args*)pArgs; /// local copy of g_n
     n = args->n;
@@ -135,6 +135,7 @@ void __entry k_passUni(pass_args * pArgs)
     host_printf("k_PassUni: thread %i has d at %i\n", gid, d);
     pArgs->debug[d] = gid;
 
+    STARTCLOCK(time_s);
     while (repeater--)
     {
         magnitude = ringIndex;      /// magnitude is the distance away from the starting point which is ringIndex
@@ -163,6 +164,9 @@ void __entry k_passUni(pass_args * pArgs)
         }
         while (magnitude != ringIndex);
     }
+    STOPCLOCK(time_e);
+    host_printf("Pass_Uni: Core with rank: %i, total time :%i\n", gid, time_s - time_e);
+
 }
 
 
@@ -179,6 +183,7 @@ void __entry k_passMulti(pass_args * pArgs)
     unsigned int magnitude, magMax;
     int nextIndex;
     unsigned int  repeater = REPEATCOUNT;  /// add to the work load a litte
+    unsigned time_e, time_s, idle_e, idle_s;
 
     int n = pArgs->n; /// local copy of g_n
 
@@ -190,6 +195,7 @@ void __entry k_passMulti(pass_args * pArgs)
     host_printf("k_PassMulti: thread %i has d at %i\n", gid, d);
     coprthr_barrier(0);
 
+    STARTCLOCK(time_s);
     while (repeater--)
     {
         magnitude = 0;
@@ -226,6 +232,9 @@ void __entry k_passMulti(pass_args * pArgs)
             }
         }
     }
+    STOPCLOCK(time_e);
+    host_printf("Pass_Multi: Core with rank: %i, total time :%i\n", gid, time_s - time_e);
+
 }
 
 void __entry k_mpiPassMulti(pass_args * pArgs)
@@ -238,6 +247,7 @@ void __entry k_mpiPassMulti(pass_args * pArgs)
     int * outmsg_up, * inmsg_up;
     int * outmsg_down, * inmsg_down;
     int newI;
+    unsigned time_e, time_s, idle_e, idle_s;
 
     MPI_Status status;
     MPI_Init(0,MPI_BUF_SIZE);
@@ -256,6 +266,8 @@ void __entry k_mpiPassMulti(pass_args * pArgs)
 
     magMax = CORECOUNT / 2;
     magnitude = 0;
+
+    STARTCLOCK(time_s);
     while (magnitude < magMax)
     {
 //        if (rank==5) host_printf("core %i with rank: %i, sending message: %i, %i, %i, %i to next: %i from prev: %i, src is %i\n", gid, rank, outmsg[0], outmsg[1], outmsg[2], outmsg[3],  rankNext, rankPrev, msg_source);
@@ -287,6 +299,8 @@ void __entry k_mpiPassMulti(pass_args * pArgs)
         }*/
         magnitude++;
     }
+    STOPCLOCK(time_e);
+    host_printf("MPI_Pass_Multi: Core with rank: %i, total time :%i\n", rank, time_s - time_e);
 
     MPI_Finalize();
 }
@@ -304,6 +318,7 @@ void __entry k_passBroadcast(pass_args * pArgs)
     unsigned int firstI, lastI;
     unsigned int  repeater = REPEATCOUNT;  /// add to the work load a litte
     int n = pArgs->n; /// local copy of g_n
+    unsigned time_e, time_s, idle_e, idle_s;
 
     int vLocal[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     unsigned int core[] = {core00, core01, core02, core03, core10, core11, core12, core13, core20, core21, core22, core23, core30, core31, core32, core33};
@@ -322,6 +337,7 @@ void __entry k_passBroadcast(pass_args * pArgs)
     lastI = firstI + n;
     localCoreId = LOCAL_MEM_ADDRESS_BASE();
 
+    STARTCLOCK(time_s);
     while (repeater--)
     {
         coreI = (gid == (CORECOUNT - 1)) ? 0 : gid + 1;     /// use the gid as a place to start in the core array
@@ -333,6 +349,9 @@ void __entry k_passBroadcast(pass_args * pArgs)
             coreI = (coreI == (CORECOUNT - 1)) ? 0 : coreI + 1;
         }
     }
+    STOPCLOCK(time_e);
+    host_printf("Pass_Broardcast: Core with rank: %i, total time :%i\n", gid, time_s - time_e);
+
 
 /// Uncomment to use g_debug to show the final array contents
 //                    if (gid == 6)
@@ -348,6 +367,7 @@ void __entry k_mpiPassBroadcast(pass_args * pArgs)
     int * pBuffer;
     unsigned int  repeater = REPEATCOUNT;  /// add to the work load a litte
     unsigned int execTime;
+    unsigned time_e, time_s, idle_e, idle_s;
 
     MPI_Status status;
     MPI_Init(0,MPI_BUF_SIZE);
@@ -362,6 +382,7 @@ void __entry k_mpiPassBroadcast(pass_args * pArgs)
     host_printf("k_mpiPassMulti: thread  has d at \n");
     pBuffer = vLocal;
     step = n * sizeof(int);
+    STARTCLOCK(time_s);
     while (repeater--)
     {
         for (i=0; i < size; i++)
@@ -370,8 +391,8 @@ void __entry k_mpiPassBroadcast(pass_args * pArgs)
             pBuffer += step;
         }
     }
-
-
+    STOPCLOCK(time_e);
+    host_printf("MPI_Pass_Broardcast: Core with rank: %i, total time :%i\n", rank, time_s - time_e);
 
     MPI_Finalize();
 }

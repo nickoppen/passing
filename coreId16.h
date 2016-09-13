@@ -23,11 +23,12 @@
 #define NEIGHBOUR_LOC(CORE, STRUCTURE, INDEX, SIZEOFTYPE) (CORE + ((unsigned int)STRUCTURE) + (INDEX * SIZEOFTYPE))
 #define NEIGHBOR_LOC(CORE, STRUCTURE, INDEX, SIZEOFTYPE) (CORE + ((unsigned int)STRUCTURE) + (INDEX * SIZEOFTYPE))      /// for those who use the "alternative" spelling
 
-#define LOOPINGINCREMENT(newVal, val, inc) newVal = val + inc; if (newVal > MAXCORE) newVal = newVal - CORECOUNT;
-#define LOOPINGDECREMENT(newVal, val, dec) newVal = val - dec; if (newVal < MINCORE) newVal = newVal + CORECOUNT;
-
 /// usage:
 //
 ///         *(int*)NEIGHBOUR_LOC(NEXT, vLocal, i, sizeof(int)) = vLocal[i];
 //
 /// where the contents of vLocal are ints
+
+#define LOOPINGINCREMENT(newVal, val, inc) newVal = val + inc; if (newVal > MAXCORE) newVal = newVal - CORECOUNT;
+#define LOOPINGDECREMENT(newVal, val, dec) newVal = val - dec; if (newVal < MINCORE) newVal = newVal + CORECOUNT;
+
