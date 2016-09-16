@@ -41,15 +41,17 @@ int main()
 
 	coprthr_program_t prg = coprthr_cc_read_bin("./passing.e32", 0);
 //	coprthr_kernel_t thr_passUni = (coprthr_sym_t)coprthr_getsym(prg,"k_passUni");
-	coprthr_sym_t thr_mpiPassUni = (coprthr_sym_t)coprthr_getsym(prg,"k_mpiPassUni");
+//	coprthr_sym_t thr_mpiPassUni = (coprthr_sym_t)coprthr_getsym(prg,"k_mpiPassUni");
 //   coprthr_sym_t thr_mpiMulti = clsym(stdacc, openHandle, "k_mpiPassMulti", CLLD_NOW);
 //   coprthr_sym_t thr_Multi = (coprthr_sym_t)coprthr_getsym(prg, "k_passMulti");
 //   coprthr_sym_t thr_mpiBroadcast = clsym(stdacc, openHandle, "k_mpiPassBroadcast", CLLD_NOW);
-//   coprthr_sym_t thr_Broadcast = clsym(stdacc, openHandle, "k_passBroadcast", CLLD_NOW);
+	coprthr_kernel_t thr_Broadcast = (coprthr_sym_t)coprthr_getsym(prg,"k_passBroadcast");
 
        coprthr_mem_t dev_debug = (coprthr_mem_t)coprthr_dmalloc(dd, DEBUG_BUFFER*sizeof(int), 0);             /// Allocate some space on the epiphany for debug
         for (i=0; i<DEBUG_BUFFER; i++)
             host_debug[i] = -1;
+        for (i=0; i<32; i++)    /// testing
+            host_debug[i] = 0;
         coprthr_dwrite(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int), COPRTHR_E_WAIT);
         args.debug = coprthr_memptr(dev_debug, 0);
 
@@ -96,7 +98,7 @@ int main()
 */
 /// MPI unicast
 /// Uncomment if using debug
-
+/*
        tstart = clock();
 	   coprthr_mpiexec(dd, ECORES, thr_mpiPassUni, &args, sizeof(args), 0);
        tend = clock();
@@ -131,7 +133,7 @@ int main()
         printf("\neod\n");
 //        fout << std::endl;
 //        fout.flush();
-
+*/
 
 /// multicast
 /*
@@ -202,40 +204,40 @@ int main()
 /// broardcast - No Wait
 
 /// Uncomment if using debug
-//        for (i=0; i<DEBUG_BUFFER; i++)
-//            debug[i] = -1;
-//       clmsync(stdacc, 0, debug, CL_MEM_DEVICE|CL_EVENT_WAIT);
-//
-//       tstart = clock();
-//       clforka(stdacc, 0, krnNoWait, &ndr, CL_EVENT_WAIT, n, debug);
-//       tend = clock();
-//       cout << "forked Broadcast - No wait.\n";
-//       tend = clock();
-//
-//       fout << n << "," << "broadcastNoWait," << (tend - tstart) << endl;
-//       clmsync(stdacc, 0, debug, CL_MEM_HOST|CL_EVENT_WAIT);
+       printf("about to call broadcast.\n");
+       tstart = clock();
+//       coprthr_dexec(dd, ECORES, thr_passUni, &args, COPRTHR_E_WAIT);   // wait for the documentaiton for this call
+        coprthr_mpiexec(dd, ECORES, thr_Broadcast, &args, sizeof(pass_args), 0);
+       tend = clock();
+       printf("forked - Broadcast - no wait. Exec time was: %i\n", (int)(tend - tstart));
+
+//       fout << n << "," << "unicast," << (tend - tstart) << endl;
+        coprthr_dread(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int), COPRTHR_E_NOWAIT);
 
     /// Uncomment to use debug as output
     /// First Retrieve the debug output from the cores - TODO
-   /*     i = 0;
+      i = 0;
         while (i<DEBUG_BUFFER)
         {
-            if (debug[i] != -1)
+            if (host_debug[i] != -1)
+//            if (i < (16*5))
             {
-                fout << debug[i++];
+//                fout << host_debug[i++];
+                printf("%d, ", host_debug[i++]);
                 if ((i%(16*n)) == 0)
-                    fout << endl;
+//                    fout << std::endl;
+                    printf("\n");
                 else
-                    fout << ",";
+                    printf("'");
+//                    fout << ",";
             }
             else
                 break;
         }
-        fout << endl;
-   */
+
 //         fout.flush();
     }
-
+    printf("closing device\n");
 	coprthr_dclose(dd);
 //    fbuf.close();
     return 0;
