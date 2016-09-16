@@ -15,6 +15,7 @@
 #define ECORES 16    /// Not great - CORECOUNT is defined as the same thing in ringTopo16.c
 
 //using namespace std;
+// broadcastStrat branch
 
 int main()
 {
