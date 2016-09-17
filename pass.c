@@ -25,6 +25,9 @@ int main()
     int host_debug[DEBUG_BUFFER];
     pass_args args;
 
+    float ave;
+    int summation;
+
 	int dd = coprthr_dopen(COPRTHR_DEVICE_E32,COPRTHR_O_THREAD);
     printf("epiphany dev:%i\n", dd);
 	if (dd<0)
@@ -39,8 +42,6 @@ int main()
        coprthr_mem_t dev_debug = (coprthr_mem_t)coprthr_dmalloc(dd, DEBUG_BUFFER*sizeof(int), 0);             /// Allocate some space on the epiphany for debug
         for (i=0; i<DEBUG_BUFFER; i++)
             host_debug[i] = -1;
-        for (i=0; i<32; i++)    /// testing
-            host_debug[i] = 0;
         coprthr_dwrite(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int), COPRTHR_E_WAIT);
         args.debug = coprthr_memptr(dev_debug, 0);
 
@@ -62,7 +63,7 @@ int main()
        printf("forked - Broadcast - no wait. Exec time was: %i\n", (int)(tend - tstart));
 
 //       fout << n << "," << "unicast," << (tend - tstart) << endl;
-        coprthr_dread(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int), COPRTHR_E_NOWAIT);
+        coprthr_dread(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int), COPRTHR_E_WAIT);
 
     /// Uncomment to use debug as output
     /// First Retrieve the debug output from the cores - TODO
@@ -87,8 +88,18 @@ int main()
 
 //         fout.flush();
     }
-    printf("closing device\n");
+    printf("\nclosing device:%i\n", dd);
 	coprthr_dclose(dd);
+	for (i=0; i<3; i++)
+	{
+        summation = 0;
+        for (n=0; n < 16; n++)
+        {
+            summation += host_debug[n+(i*16)];
+        }
+        ave = (float)summation / 16;
+        printf("the average for strategy %d is %f\n", i, ave);
+	}
 //    fbuf.close();
     return 0;
 }

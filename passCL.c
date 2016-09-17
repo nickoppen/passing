@@ -46,7 +46,7 @@ void __entry k_passBroadcast(pass_args * pArgs)
     int vLocal[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     unsigned int core[] = {core00, core01, core02, core03, core10, core11, core12, core13, core20, core21, core22, core23, core30, core31, core32, core33};
 
-    host_printf("k_passBroadcastNoWait: thread %i has debug[0] at %i\n", gid, pArgs->debug[0]);
+//    host_printf("k_passBroadcastNoWait: thread %i has debug[gid] at %i\n", gid, pArgs->debug[gid]);
 
     initLocal(vLocal, n, gid);
 
@@ -60,6 +60,7 @@ void __entry k_passBroadcast(pass_args * pArgs)
     lastI = firstI + n;
     localCoreId = LOCAL_MEM_ADDRESS_BASE();
 
+    coprthr_barrier(0);     /// ensure that all cores start at the same time
     STARTCLOCK(time_s);
     while (repeater--)
     {
@@ -73,12 +74,14 @@ void __entry k_passBroadcast(pass_args * pArgs)
         }
     }
     STOPCLOCK(time_e);
-    host_printf("Pass_Broardcast(pass up): Core with rank: %i, total time :%i\n", gid, time_s - time_e);
+    coprthr_barrier(0); /// ensure that all cores are done before recording results and doing the host printf
     pArgs->debug[gid] = time_s - time_e;
+    host_printf("Pass_Broardcast(pass up): Core with rank: %i, total time :%i\n", gid, time_s - time_e);
 
 /// testing - 1
     repeater = REPEATCOUNT;
 
+    coprthr_barrier(0);
     STARTCLOCK(time_s);
     while (repeater--)
     {
@@ -90,12 +93,14 @@ void __entry k_passBroadcast(pass_args * pArgs)
         }
     }
     STOPCLOCK(time_e);
-    host_printf("Pass_Broardcast(pass 0 to 15): Core with rank: %i, total time :%i\n", gid, time_s - time_e);
+    coprthr_barrier(0);
     pArgs->debug[gid+16] = time_s - time_e;
+    host_printf("Pass_Broardcast(pass 0 to 15): Core with rank: %i, total time :%i\n", gid, time_s - time_e);
 
 /// testing - 2 4 way map
     repeater = REPEATCOUNT;
 
+    coprthr_barrier(0);
     STARTCLOCK(time_s);
     while (repeater--)
     {
@@ -107,8 +112,9 @@ void __entry k_passBroadcast(pass_args * pArgs)
         }
     }
     STOPCLOCK(time_e);
-    host_printf("Pass_Broardcast(4 way map): Core with rank: %i, total time :%i\n", gid, time_s - time_e);
+    coprthr_barrier(0);
     pArgs->debug[gid+32] = time_s - time_e;
+    host_printf("Pass_Broardcast(4 way map): Core with rank: %i, total time :%i\n", gid, time_s - time_e);
 
 /// Uncomment to use g_debug to show the final array contents
 //                    if (gid == 6)
