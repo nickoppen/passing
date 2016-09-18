@@ -90,7 +90,7 @@ int main()
     }
     printf("\nclosing device:%i\n", dd);
 	coprthr_dclose(dd);
-	for (i=0; i<3; i++)
+	for (i=0; i<4; i++)
 	{
         summation = 0;
         for (n=0; n < 16; n++)
