@@ -26,7 +26,7 @@ CL: passing.e32
 passing.x: pass.o
 	$(CC) -o passing.x pass.o $(LIBS)
 
-passing.e32: passCL.c passing.h ringTopo16.c 
+passing.e32: passCL.c passing.h ringTopo16.c timer.h
 	$(COPRCC) $(COPRCC_FLAGS) $(COPRCC_LIBS) $(COPRCC_INCS) $(COPRCC_DEFS)  -o passing.e32 $<
 
 pass.o: pass.c passing.h

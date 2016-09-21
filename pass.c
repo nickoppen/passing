@@ -19,7 +19,7 @@
 
 int main()
 {
-    int i;    /// Uncomment when using debug
+    int i, j;    /// Uncomment when using debug
     int  n;
     clock_t tstart, tend;
     int host_debug[DEBUG_BUFFER];
@@ -45,8 +45,8 @@ int main()
         coprthr_dwrite(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int), COPRTHR_E_WAIT);
         args.debug = coprthr_memptr(dev_debug, 0);
 
-//    for (n=1; n<=16; n++)
-    for (n=3; n<=3; n=n+2)
+    for (n=1; n<=16; n++)
+//    for (n=3; n<=3; n=n+2)
     {
         //std::cout << "n is equal to: " << n << "\n";
         args.n = n;     /// passed to all kernels
@@ -55,19 +55,19 @@ int main()
 /// broardcast - No Wait
 
 /// Uncomment if using debug
-       printf("about to call broadcast.\n");
+//       printf("about to call broadcast.\n");
        tstart = clock();
 //       coprthr_dexec(dd, ECORES, thr_passUni, &args, COPRTHR_E_WAIT);   // wait for the documentaiton for this call
         coprthr_mpiexec(dd, ECORES, thr_Broadcast, &args, sizeof(pass_args), 0);
        tend = clock();
-       printf("forked - Broadcast - no wait. Exec time was: %i\n", (int)(tend - tstart));
+//       printf("forked - Broadcast - no wait. Exec time was: %i\n", (int)(tend - tstart));
 
 //       fout << n << "," << "unicast," << (tend - tstart) << endl;
         coprthr_dread(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int), COPRTHR_E_WAIT);
 
     /// Uncomment to use debug as output
     /// First Retrieve the debug output from the cores - TODO
-      i = 0;
+/*      i = 0;
         while (i<DEBUG_BUFFER)
         {
             if (host_debug[i] != -1)
@@ -84,22 +84,24 @@ int main()
             }
             else
                 break;
+        }*/
+        printf("%d", n);
+        for (i=0; i<4; i++)
+        {
+            summation = 0;
+            for (j=0; j < 16; j++)
+            {
+                summation += host_debug[j+(i*16)];
+            }
+            ave = (float)summation / 16;
+            printf(", %f", ave);
         }
+        printf("\n");
 
 //         fout.flush();
     }
     printf("\nclosing device:%i\n", dd);
 	coprthr_dclose(dd);
-	for (i=0; i<4; i++)
-	{
-        summation = 0;
-        for (n=0; n < 16; n++)
-        {
-            summation += host_debug[n+(i*16)];
-        }
-        ave = (float)summation / 16;
-        printf("the average for strategy %d is %f\n", i, ave);
-	}
 //    fbuf.close();
     return 0;
 }
