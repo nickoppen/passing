@@ -43,7 +43,8 @@ void __entry k_passBroadcast(pass_args * pArgs)
     int n = pArgs->n; /// local copy of g_n
     unsigned time_e, time_s, idle_e, idle_s;
 
-    int vLocal[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+//    int vLocal[16384];  // 1024 * 16      // int must be two bytes or more
+    int vLocal[1024];
     unsigned int coreS1andS2[] = {core00, core01, core02, core03, core10, core11, core12, core13, core20, core21, core22, core23, core30, core31, core32, core33};
     unsigned int coreS3[] = {core30, core20, core22, core00, core23, core11, core32, core31, core13, core10, core33, core03, core21, core12, core01, core02};       ///www.random.org/sequences
 
@@ -198,7 +199,7 @@ void __entry k_passBroadcast(pass_args * pArgs)
     }
     while (repeater--)
     {
-        for(coreI = 0; coreI < CORECOUNT; coreI++)
+        for(coreI = 0; coreI < MAXCORE; coreI++)
         {
             if (core[coreI] != localCoreId)
                 for (i=firstI; i < lastI; i++)

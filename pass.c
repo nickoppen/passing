@@ -45,7 +45,7 @@ int main()
         coprthr_dwrite(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int), COPRTHR_E_WAIT);
         args.debug = coprthr_memptr(dev_debug, 0);
 
-    for (n=1; n<=16; n++)
+    for (n=1; n<=32; n++)
 //    for (n=3; n<=3; n=n+2)
     {
         //std::cout << "n is equal to: " << n << "\n";
