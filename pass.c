@@ -98,6 +98,19 @@ int main()
         }
         printf("\n");
 
+        printf("%d", n);
+        for (i=0; i<4; i++)
+        {
+            summation = 0;
+            for (j=0; j < 16; j++)
+            {
+                summation += host_debug[64+j+(i*16)];
+            }
+            ave = (float)summation / 16;
+            printf(", %f", ave);
+        }
+        printf("\n");
+
 //         fout.flush();
     }
     printf("\nclosing device:%i\n", dd);
