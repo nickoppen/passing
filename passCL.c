@@ -34,7 +34,8 @@ void __entry k_passBroadcast(pass_args * pArgs)
     unsigned int d = 0;
     unsigned int firstI, lastI;
     int n = pArgs->n; /// local copy of g_n
-    unsigned time_e, time_s, idle_e, idle_s;
+    unsigned int time_e, time_s, idle_e, idle_s;
+    unsigned int mesh_reg,  mesh_reg_timer;
 
 //    int vLocal[16384];  // 1024 * 16      // int must be two bytes or more
     int vLocal[1024];
@@ -79,6 +80,8 @@ void __entry k_passBroadcast(pass_args * pArgs)
 
     initLocal(vLocal, n, gid);
 
+    PREPAREMESHTIMER1(mesh_reg, E_MESHEVENT_ALL1);
+
 /*
  *  The first broardcast strategy I wrote.
  *  Each core passes the data to gid+1, gid+2... core, wrapping round when gid == 15
@@ -90,8 +93,11 @@ void __entry k_passBroadcast(pass_args * pArgs)
 
     unsigned int  repeater = REPEATCOUNT;  /// add to the work load a litte
     coprthr_barrier(0);     /// ensure that all cores start at the same time
-    STARTIDLECOUNTER(idle_s);
-    STARTCLOCK(time_s);
+		e_ctimer_set(E_CTIMER_0, E_CTIMER_MAX) ;
+		idle_s = e_ctimer_start(E_CTIMER_1, E_CTIMER_MESH_1);
+
+    STARTMESHTIMER1(idle_s);
+    STARTCLOCK0(time_s);
     core = coreS1andS2;
     while (repeater--)
     {
@@ -104,8 +110,9 @@ void __entry k_passBroadcast(pass_args * pArgs)
             coreI = (coreI == (CORECOUNT - 1)) ? 0 : coreI + 1;
         }
     }
-    STOPCLOCK(time_e);
-    STOPIDLECOUNTER(idle_e);
+    STOPCLOCK0(time_e);
+    STOPMESHTIMER1(idle_e);
+
     coprthr_barrier(0); /// ensure that all cores are done before recording results and doing the host printf
     pArgs->debug[gid] = time_s - time_e;
     pArgs->debug[gid+64] = idle_s - idle_e; /// put the idle time data after the clock data
@@ -118,8 +125,8 @@ void __entry k_passBroadcast(pass_args * pArgs)
     repeater = REPEATCOUNT;
 
     coprthr_barrier(0);
-    STARTIDLECOUNTER(idle_s);
-    STARTCLOCK(time_s);
+    STARTMESHTIMER1(idle_s);
+    STARTCLOCK0(time_s);
     core = coreS1andS2;
     while (repeater--)
     {
@@ -130,8 +137,8 @@ void __entry k_passBroadcast(pass_args * pArgs)
                     *(int *)NEIGHBOUR_LOC(core[coreI], vLocal,  i, (sizeof(int))) = vLocal[i];
         }
     }
-    STOPCLOCK(time_e);
-    STOPIDLECOUNTER(idle_e);
+    STOPCLOCK0(time_e);
+    STOPMESHTIMER1(idle_e);
     coprthr_barrier(0);
     pArgs->debug[gid+16] = time_s - time_e;
     pArgs->debug[gid+80] = idle_s - idle_e; /// put the idle time data after the clock data
@@ -143,8 +150,8 @@ void __entry k_passBroadcast(pass_args * pArgs)
     repeater = REPEATCOUNT;
 
     coprthr_barrier(0);
-    STARTIDLECOUNTER(idle_s);
-    STARTCLOCK(time_s);
+    STARTMESHTIMER1(idle_s);
+    STARTCLOCK0(time_s);
     switch (gid)
     {
         case 0:
@@ -205,8 +212,8 @@ void __entry k_passBroadcast(pass_args * pArgs)
                 *(int *)NEIGHBOUR_LOC(core[coreI], vLocal,  i, (sizeof(int))) = vLocal[i];
         }
     }
-    STOPCLOCK(time_e);
-    STOPIDLECOUNTER(idle_e);
+    STOPCLOCK0(time_e);
+    STOPMESHTIMER1(idle_e);
     coprthr_barrier(0);
     pArgs->debug[gid+32] = time_s - time_e;
     pArgs->debug[gid+96] = idle_s - idle_e; /// put the idle time data after the clock data
@@ -218,8 +225,8 @@ void __entry k_passBroadcast(pass_args * pArgs)
     repeater = REPEATCOUNT;
 
     coprthr_barrier(0);
-    STARTIDLECOUNTER(idle_s);
-    STARTCLOCK(time_s);
+    STARTMESHTIMER1(idle_s);
+    STARTCLOCK0(time_s);
     switch (gid)
     {
         case 0:
@@ -279,13 +286,13 @@ void __entry k_passBroadcast(pass_args * pArgs)
                 *(int *)NEIGHBOUR_LOC(core[coreI], vLocal,  i, (sizeof(int))) = vLocal[i];
         }
     }
-    STOPCLOCK(time_e);
-    STOPIDLECOUNTER(idle_e);
+    STOPCLOCK0(time_e);
+    STOPMESHTIMER1(idle_e);
     coprthr_barrier(0);
     pArgs->debug[gid+48] = time_s - time_e;
     pArgs->debug[gid+112] = idle_s - idle_e; /// put the idle time data after the clock data
 
-    host_printf("core: %d, idle start: %d, idle end: %d, idle time: %d\n", gid, idle_s, idle_e, idle_s-idle_e);
+	RESETMESHTIMER1(mesh_reg);
 
 
 }
