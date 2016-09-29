@@ -8,7 +8,7 @@
 
 #include <host_stdio.h>
 
-#define REPEATCOUNT 1000
+#define REPEATCOUNT 10000
 #define MPI_BUF_SIZE 1024
 
 void initLocal(int * vLocal, int n, unsigned int base)
@@ -35,7 +35,7 @@ void __entry k_passBroadcast(pass_args * pArgs)
     unsigned int firstI, lastI;
     int n = pArgs->n; /// local copy of g_n
     unsigned int time_e, time_s, idle_e, idle_s;
-    unsigned int mesh_reg,  mesh_reg_timer;
+    unsigned int mesh_reg;//,  mesh_reg_timer;
 
 //    int vLocal[16384];  // 1024 * 16      // int must be two bytes or more
     int vLocal[1024];
@@ -80,7 +80,7 @@ void __entry k_passBroadcast(pass_args * pArgs)
 
     initLocal(vLocal, n, gid);
 
-    PREPAREMESHTIMER1(mesh_reg, E_MESHEVENT_ALL1);
+    PREPAREMESHTIMER1(mesh_reg, E_MESHEVENT_ANYWAIT1);
 
 /*
  *  The first broardcast strategy I wrote.
