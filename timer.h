@@ -23,7 +23,7 @@
 #define E_MESHEVENT_ANYACCESS1          0x00000F00 /// Epiphany IV only
 
 
-#define PREPAREMESHTIMER1(mesh_reg, event_type) mesh_reg = e_reg_read(E_REG_MESHCFG);       int mesh_reg_timer = mesh_reg & 0xfffff00f;	                mesh_reg_timer = mesh_reg_timer | event_type;	e_reg_write(E_REG_MESHCFG, mesh_reg_timer);
+#define PREPAREMESHTIMER1(mesh_reg, event_type) mesh_reg = e_reg_read(E_REG_MESHCFG);       int mesh_reg_timer = mesh_reg & 0xfffff0ff;	                mesh_reg_timer = mesh_reg_timer | event_type;	e_reg_write(E_REG_MESHCFG, mesh_reg_timer);
 #define STARTMESHTIMER1(start_ticks)            e_ctimer_set(E_CTIMER_1, E_CTIMER_MAX) ;    start_ticks = e_ctimer_start(E_CTIMER_1, E_CTIMER_MESH_1);
 #define STOPMESHTIMER1(stop_ticks)              stop_ticks = e_ctimer_get(E_CTIMER_1);      e_ctimer_stop(E_CTIMER_1);
 #define RESETMESHTIMER1(mesh_reg)               e_reg_write(E_REG_MESHCFG, mesh_reg);

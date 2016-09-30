@@ -1,21 +1,13 @@
-//#include <iostream>
-//#include <fstream>
-//#include <ctime>
 #include <stdio.h>
 
-//extern "C" {
 #include <coprthr.h>
 #include <coprthr_cc.h>
 #include <coprthr_thread.h>
 #include <coprthr_mpi.h>
-//}
 
 #include "passing.h"
 
 #define ECORES 16    /// Not great - CORECOUNT is defined as the same thing in ringTopo16.c
-
-//using namespace std;
-// broadcastStrat branch
 
 int main()
 {
@@ -46,45 +38,14 @@ int main()
         args.debug = coprthr_memptr(dev_debug, 0);
 
     for (n=1; n<=32; n++)
-//    for (n=3; n<=3; n=n+2)
     {
-        //std::cout << "n is equal to: " << n << "\n";
         args.n = n;     /// passed to all kernels
 
-
-/// broardcast - No Wait
-
-/// Uncomment if using debug
-//       printf("about to call broadcast.\n");
-       tstart = clock();
-//       coprthr_dexec(dd, ECORES, thr_passUni, &args, COPRTHR_E_WAIT);   // wait for the documentaiton for this call
+        tstart = clock();
         coprthr_mpiexec(dd, ECORES, thr_Broadcast, &args, sizeof(pass_args), 0);
-       tend = clock();
-//       printf("forked - Broadcast - no wait. Exec time was: %i\n", (int)(tend - tstart));
-
-//       fout << n << "," << "unicast," << (tend - tstart) << endl;
+        tend = clock();
         coprthr_dread(dd, dev_debug, 0, host_debug, DEBUG_BUFFER*sizeof(int), COPRTHR_E_WAIT);
 
-    /// Uncomment to use debug as output
-    /// First Retrieve the debug output from the cores - TODO
-/*      i = 0;
-        while (i<DEBUG_BUFFER)
-        {
-            if (host_debug[i] != -1)
-//            if (i < (16*5))
-            {
-//                fout << host_debug[i++];
-                printf("%d, ", host_debug[i++]);
-                if ((i%(16*n)) == 0)
-//                    fout << std::endl;
-                    printf("\n");
-                else
-                    printf("'");
-//                    fout << ",";
-            }
-            else
-                break;
-        }*/
         printf("%d", n);
         for (i=0; i<4; i++)
         {
@@ -111,10 +72,7 @@ int main()
         }
         printf("\n");
 
-//         fout.flush();
     }
-    printf("\nclosing device:%i\n", dd);
 	coprthr_dclose(dd);
-//    fbuf.close();
     return 0;
 }
