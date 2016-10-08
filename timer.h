@@ -29,10 +29,10 @@
 #define RESETMESHTIMER1(mesh_reg)               e_reg_write(E_REG_MESHCFG, mesh_reg);
 
 
-#define STARTCLOCK0(start_ticks)         e_ctimer_set(E_CTIMER_0, E_CTIMER_MAX);   e_ctimer_start(E_CTIMER_0, E_CTIMER_CLK);    start_ticks = e_ctimer_get(E_CTIMER_0);
+#define STARTCLOCK0(start_ticks)         e_ctimer_set(E_CTIMER_0, E_CTIMER_MAX);   start_ticks = e_ctimer_start(E_CTIMER_0, E_CTIMER_CLK);
 #define STOPCLOCK0(stop_ticks)           stop_ticks = e_ctimer_get(E_CTIMER_0);    e_ctimer_stop(E_CTIMER_0);
 
-#define STARTIDLECOUNTER1(start_ticks)   e_ctimer_set(E_CTIMER_1, E_CTIMER_MAX);   e_ctimer_start(E_CTIMER_1, E_CTIMER_IDLE);   start_ticks = e_ctimer_get(E_CTIMER_1);
+#define STARTIDLECOUNTER1(start_ticks)   e_ctimer_set(E_CTIMER_1, E_CTIMER_MAX);   start_ticks = e_ctimer_start(E_CTIMER_1, E_CTIMER_IDLE);
 #define STOPIDLECOUNTER1(stop_ticks)     stop_ticks = e_ctimer_get(E_CTIMER_1);    e_ctimer_stop(E_CTIMER_1);
 
 
